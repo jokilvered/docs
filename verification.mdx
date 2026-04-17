@@ -1,0 +1,153 @@
+---
+title: "Mainnet verification: live transactions and reproducible proofs"
+sidebarTitle: "Verification"
+description: "Every claim in SaveToWin's hackathon submission is verifiable on-chain in five clicks or fewer. This page indexes the live mainnet transactions, the demo config PDA, and the scripts judges can run to reproduce the integration tests."
+---
+
+SaveToWin is deployed live on Solana mainnet. Every claim in the hackathon submission — the program deployment, the triple-flywheel config, the user deposit flow, the streak increment, the prize-pool growth — is recorded as a real transaction that anyone can verify on Solscan. This page is the index.
+
+<Note>
+  Built for the Ranger Build-A-Bear Hackathon, April 2026. Verifiable. Live. Shipped.
+</Note>
+
+## 1-sentence pitch
+
+Solana's first principal-protected prize-linked savings vault backed by real-world reinsurance yield, with an **on-chain auto-rolling** PT market discovery layer — the strategy bot scans all 94 Exponent markets every epoch, picks the best live ONyc-backed PT by maturity + APY + liquidity, and rolls without a code push.
+
+## Program deployment
+
+| Check | Link |
+|---|---|
+| Program exists on mainnet | [`save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8`](https://solscan.io/account/save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8) |
+| Latest upgrade tx (Triple Flywheel) | [`5DKdCphG…mLh7`](https://solscan.io/tx/5DKdCphGVqVCZBdEuqrx7kRrsQcF3LVj6acw619QNsKXpuFy6oSfTgE7sWnH4Ai94s9dzt58nRQuP1txYrvhmLh7) |
+
+Fetch the on-chain IDL yourself to verify the instruction surface — including the `rollover_bps` argument that drives the 10%-per-epoch jackpot growth:
+
+```bash
+anchor idl fetch save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8 --provider.cluster mainnet-beta
+```
+
+## Live strategy transactions
+
+| Check | Tx |
+|---|---|
+| Fresh config init with `rollover_bps=1000` | [`5MJzDWoz…VDAv`](https://solscan.io/tx/5MJzDWozhGJAweC9ZHbWEmU99wFo9gpTcgSrQKGm7pMeLraaf4fhX2parfN7x3QdWBBXqk1r6U1QvJmeL3ByVDAv) |
+| User deposit 0.10 USDC → **streak=1 emitted** | [`5dL9i6hM…Rtf7`](https://solscan.io/tx/5dL9i6hMcycdQFHTkYpwP5ojXAR422v2BQim5UKFBjdiAyQd5TSNGaKyhWHzS8Y8K1VTMX677Ni5WzcBbrj1Rtf7) |
+| Same-epoch second deposit → streak unchanged (no double-count) | [`8R6mV3Bd…AioD`](https://solscan.io/tx/8R6mV3BdErh3KLp9jD9FpjHT17ECySwJipMyaUikqJ5mCpydBaWUm11RTnDKSFXEXT1nHgvZEX8H4sogUEHAioD) |
+| Demo config PDA with live state | [`AqckCR3uZVfbYfALiKNKnTMYzRrMtcNvkBkoBhaPnpP2`](https://solscan.io/account/AqckCR3uZVfbYfALiKNKnTMYzRrMtcNvkBkoBhaPnpP2) |
+
+## Real leaderboard from on-chain events
+
+The leaderboard is not a static JSON — it is computed by replaying `StreakUpdated` and `Deposit` events from the live program log. A freshly captured snapshot:
+
+```json
+{
+  "total_users": 1,
+  "leaderboard": [{
+    "rank": 1,
+    "user": "Gd5pfX1ggcdTM8ASQqkqe6YQ25v5wc1pgkZhUKuujeh6",
+    "streak": 1,
+    "multiplier": "2x",
+    "balance_usdc": "0.10",
+    "lifetime_points": 17280
+  }]
+}
+```
+
+Reproduce:
+
+```bash
+npx ts-node --transpile-only scripts/capture-mainnet-events.ts
+```
+
+## Yield engine — live numbers
+
+| Source | Value (verified 2026-04-14) |
+|---|---|
+| Exponent PT-ONyc APY | **13.87%** (from on-chain `last_ln_implied_rate`) |
+| Exponent pool depth | sy_bal=3.69B, pt_bal=2.97B (healthy ~55/45) |
+| Jupiter USDC → ONyc | 0.10 USDC → 0.0916 ONyc (**0% price impact**) |
+| Kamino USDC supply APR | 2.38% @ 90.01% util, $214M TVL |
+
+Blended math:
+
+```
+0.70 × 13.87%  (PT-ONyc live, market 8QJRc12B..., maturity 2026-05-13)
++ 0.30 ×  2.38% (Kamino USDC Main, 90% util, real-time)
+───────────────────────────────────────────
+= 10.42% blended APY  ✅ clears Ranger 10% floor
+```
+
+Reproduce:
+
+```bash
+npx ts-node --transpile-only scripts/test-jupiter-mainnet.ts      # Jupiter quote roundtrip
+npx ts-node --transpile-only scripts/test-market-discovery.ts     # Exponent scan + auto-pick
+```
+
+<Note>
+  The [Yield Engine overview](/yield/overview) uses a more conservative **10.3% design target** derived from trailing two-year Kamino averages. The **10.42% number above is a live snapshot** from 2026-04-14. Both clear the 10% hackathon floor.
+</Note>
+
+## Novelty — auto-rolling on-chain market discovery
+
+The strategy bot has **no hardcoded PT market address**. Every epoch it:
+
+1. Calls `listAllMarkets(exponentProgram)` → returns all 94 `MarketTwo` accounts
+2. Filters for ONyc-backed SY mint whitelist (maturity + liquidity + APY bounds)
+3. Ranks by score = maturity-proximity + APY + log10(depth)
+4. Picks the best live candidate
+5. If held PT is matured (next epoch), redeems first, then deploys into the new market
+
+Verified live on mainnet:
+
+```
+[scan]  94 MarketTwo accounts fetched in 1380ms
+[cat]   3 ONyc-backed markets: 2 matured, 1 live
+[pick]  ✅ 8QJRc12BDXHR... — 29.6d, 13.87% APY, $3.69B SY depth
+[+30d]  no live → auto-fallback to 100% Kamino ✅
+```
+
+Code location: `strategy-bot/src/adapters-sdk/exponent.ts` → `findBestOnycMarket()`.
+
+## How to run the full demo
+
+```bash
+git clone https://github.com/jokilvered/savetowin.git
+cd savetowin
+
+# 1. Surfpool E2E (requires surfpool running locally)
+cd cli && npx ts-node ../scripts/demo-triple-flywheel.ts
+
+# 2. Mainnet auto-market discovery (public RPC, no keys needed)
+cd strategy-bot && npx ts-node --transpile-only ../scripts/test-market-discovery.ts
+
+# 3. Mainnet Jupiter quote roundtrip (public RPC, no keys needed)
+cd strategy-bot && npx ts-node --transpile-only ../scripts/test-jupiter-mainnet.ts
+
+# 4. Decode real StreakUpdated events from mainnet
+cd strategy-bot && npx ts-node --transpile-only ../scripts/capture-mainnet-events.ts
+```
+
+## Honest caveats
+
+<AccordionGroup>
+  <Accordion title="Points are a promise, not a token">
+    $SAVE points follow the EigenLayer / Pendle / Ethena pattern. Recorded on-chain deterministically; redemption is a stated intention, not a contractual commitment.
+  </Accordion>
+  <Accordion title="10.42% APY uses live numbers, but rates move">
+    Kamino APR floats and PT rates move daily. The claim is trailing, not a guaranteed floor. The [Yield Overview](/yield/overview) quotes the 10.3% design target; [the reinsurance detail page](/yield/reinsurance) explains the fixed-sleeve mechanics.
+  </Accordion>
+  <Accordion title="OnRe has 8-month track record">
+    Mitigated by 52-day PT tenor + auto-roll. See the [Safety FAQ](/faq/safety) for detailed counterparty disclosure.
+  </Accordion>
+  <Accordion title="PT-ONyc pool depth ~$6.9M">
+    $100k deploys cleanly. A $1M seed would need laddering — the auto-roll infrastructure supports this trivially via multiple markets.
+  </Accordion>
+  <Accordion title="Bot keypair = admin keypair (hackathon scope)">
+    Production separation deferred. Cobo MPC infra is the planned path (sponsor prize in this hackathon).
+  </Accordion>
+  <Accordion title="Rolling jackpot rent accounting">
+    `prize_pool_balance` inflates virtually; actual payout is capped by real token balance. Documented in `settle_draw.rs`.
+  </Accordion>
+</AccordionGroup>

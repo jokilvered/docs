@@ -1,0 +1,121 @@
+---
+title: "Architecture: program, strategy bot, and web stack"
+sidebarTitle: "Architecture"
+description: "How the SaveToWin system fits together — the Anchor program on-chain, the strategy bot off-chain, the Voltr CPI adaptor layer, and the Next.js frontend."
+---
+
+SaveToWin is three independent runtimes that talk through on-chain state:
+
+1. **The Anchor program** — custody, TWAB accounting, streak tracking, draw logic
+2. **The strategy bot** — deploys yield, harvests, auto-rolls PT markets, ranks draws
+3. **The Next.js web app** — user-facing deposit, withdraw, leaderboard, draw views
+
+Plus one piece of infrastructure:
+
+4. **Voltr vault adaptor layer** — the CPI surface that routes capital into Kamino and Exponent without the prize vault having to know about every underlying protocol directly.
+
+## Data flow
+
+<Steps>
+  <Step title="User deposits via the web app">
+    The Next.js frontend calls `buildDepositIxs()` from `@savetowin/sdk`, producing Anchor instructions that the connected wallet signs. The transaction hits the PrizeVault program.
+  </Step>
+  <Step title="PrizeVault program updates TWAB and mints tickets">
+    The program records the deposit in the user's `UserTwab` account (time-weighted balance observations) and mints `stwUSDC` tickets 1:1. The USDC itself flows into the vault's idle-asset ATA. A `StreakUpdated` event fires if this is the first deposit of a new epoch.
+  </Step>
+  <Step title="Strategy bot deploys idle USDC">
+    On its next tick, the off-chain bot reads the idle ATA balance and deploys it via Voltr: 30% into Kamino USDC Main (instant redemption), 70% routed through Jupiter to acquire ONyc, then wrapped to SY and deposited into the best live PT-ONyc market on Exponent.
+  </Step>
+  <Step title="Epoch boundary triggers harvest and draw">
+    At epoch end, the bot computes `yield = currentValue − total_tickets` and calls `harvest_yield`. The program splits: 20% to the prize pool, 80% retained as vault principal appreciation. Then `request_draw` + `settle_draw` runs using Switchboard VRF randomness.
+  </Step>
+  <Step title="Frontend reflects new state">
+    The Next.js app reads the `PrizeVaultConfig` + `UserTwab` accounts on each load, overlays the live prize-pool PDA balance, and renders the leaderboard from the indexer's event replay.
+  </Step>
+</Steps>
+
+## Component map
+
+### 1. PrizeVault Anchor program
+
+- **Language:** Rust (Anchor framework)
+- **Program ID:** [`save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8`](https://solscan.io/account/save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8)
+- **Binary size:** 394 KB (`opt-level = "z"`)
+- **Key instructions:** `initialize_config`, `deposit`, `withdraw`, `request_withdraw`, `claim_withdraw`, `harvest_yield`, `request_draw`, `settle_draw`
+- **State accounts:** `PrizeVaultConfig`, `UserTwab` (per user, with up to 64 TWAB observations), `DrawState` (per epoch), `PendingWithdraw` (two-phase withdrawal receipts)
+- **Audit history:** 2 rounds, 12 findings total, all resolved
+- **Test coverage:** 28 tests (19 integration, 9 unit) running against the Anchor test validator
+
+The program's only external CPI is into Voltr. It does **not** directly touch Kamino, Exponent, or Jupiter — those are mediated through the adaptor layer, keeping the prize-vault's attack surface minimal.
+
+### 2. Strategy bot
+
+- **Language:** TypeScript (Node.js)
+- **Deployment:** AWS EC2 (single long-running process with a 60s epoch tick)
+- **Core responsibilities:**
+  - Read idle USDC from the vault ATA each tick
+  - Call `findBestOnycMarket()` — auto-discover the best live PT-ONyc market from all 94 Exponent markets
+  - Route USDC → ONyc via Jupiter with slippage and price-impact guards
+  - Build PT-ONyc buy instruction manually (Exponent has no TS SDK)
+  - Build Kamino deposit via `@kamino-finance/klend-sdk` (converted from `@solana/kit` to `web3.js` at runtime)
+  - Harvest yield into the prize pool at epoch boundary
+  - Request and settle draws using Switchboard VRF
+
+See the [Auto-roll novelty](/verification#novelty-auto-rolling-on-chain-market-discovery) for details on how the bot picks markets without a hardcoded address.
+
+### 3. Next.js web app
+
+- **Framework:** Next.js 15 App Router
+- **Wallet:** `@solana/wallet-adapter` (Phantom, Solflare)
+- **Routes:**
+  - `/` — home, jackpot countdown, TVL, APY breakdown
+  - `/vault` — deposit and withdraw forms
+  - `/leaderboard` — live leaderboard sourced from indexer JSON
+  - `/draws` — past draws with winner Pubkey and Switchboard VRF proof link
+- **Data:** reads `PrizeVaultConfig` + `UserTwab` directly; the leaderboard is consumed from the indexer's JSON export updated each epoch
+- **RPC:** Alchemy mainnet (free tier — HTTP polling for signature confirmation since `signatureSubscribe` WebSocket is paid-tier only)
+
+### 4. Voltr adaptor layer
+
+The [Voltr vault](/sdk/addresses#voltr) wraps two underlying protocols (Kamino and Exponent) behind a single CPI surface. The PrizeVault program holds LP tokens (`VOLTR_LP_MINT`) as a claim on the underlying USDC. This isolation means:
+
+- New yield sources can be added to the Voltr strategy list without re-auditing the PrizeVault program.
+- Capital moves between Kamino and PT-ONyc automatically based on the strategy bot's configuration — the on-chain program doesn't need to know or care.
+- Withdrawals use Voltr's two-phase queue (`request_withdraw` → `claim_withdraw`) so illiquid PT positions can be unwound correctly without breaking the user-facing withdrawal UX.
+
+## Repository layout
+
+```
+savetowin/
+├── programs/prize-vault/       # Anchor program (Rust)
+├── packages/sdk/               # @savetowin/sdk (TypeScript)
+├── cli/                        # CLI scripts (deposit, withdraw, status, ...)
+├── strategy-bot/               # Off-chain bot (TypeScript)
+├── web/                        # Next.js 15 frontend
+├── voltr-setup/                # Voltr strategy adaptor registration
+├── tests/                      # Anchor integration tests
+├── scripts/                    # Reproducible mainnet verification scripts
+└── docs/                       # (this documentation)
+```
+
+## Build and run
+
+```bash
+# Build the Anchor program
+anchor build
+
+# Run the Anchor tests
+anchor test
+
+# Deploy the web frontend locally
+cd web && npm run dev
+
+# Run the strategy bot (requires bot keypair in cli/.env)
+cd strategy-bot && npm start
+```
+
+See the [Verification](/verification) page for the full reproduction script list.
+
+## On-chain addresses
+
+See the [SDK addresses page](/sdk/addresses) for the canonical list of every program, mint, PDA, and constant used across the protocol.

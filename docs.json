@@ -63,6 +63,14 @@
               "faq/general",
               "faq/safety"
             ]
+          },
+          {
+            "group": "Hackathon",
+            "pages": [
+              "verification",
+              "eligibility",
+              "architecture"
+            ]
           }
         ]
       },

@@ -1,0 +1,47 @@
+---
+title: "Hackathon eligibility: how SaveToWin meets the Ranger rules"
+sidebarTitle: "Eligibility"
+description: "Rule-by-rule compliance map for the Ranger Build-A-Bear Main Track. SaveToWin clears every minimum and avoids every disqualifying yield source."
+---
+
+The Ranger Build-A-Bear Main Track has hard eligibility gates. A strategy that fails any one of them is disqualified from seeding regardless of competition performance. This page maps SaveToWin against every rule, one line at a time.
+
+## Minimum thresholds
+
+| Rule | SaveToWin | Status |
+|---|---|---|
+| **Minimum APY: 10%** | 10.42% blended (0.70 × 13.87% + 0.30 × 2.38%, live 2026-04-14) | ✅ clears by 42 bps |
+| **Base asset: USDC** | Native USDC (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`); tickets are stwUSDC 1:1 | ✅ |
+| **Tenor: 3-month lock, rolling** | PT-ONyc matures 2026-05-13; bot auto-rolls into next market every ~52 days via on-chain discovery | ✅ rolling, reassessed every epoch |
+
+See the live APY math on the [Verification](/verification) page and the sleeve breakdown on the [Yield Engine](/yield/overview) page.
+
+## Disqualifying yield sources (we avoid all four)
+
+<AccordionGroup>
+  <Accordion title="❌ Ponzi-like yield-bearing stables (circular yield dependencies)">
+    **Not used.** SaveToWin's 70% fixed sleeve is PT-ONyc — a principal token redeemable at par at maturity, backed by real-world reinsurance premiums. No YBS wrapping, no circular collateralisation, no dependency on another YBS that depends on us. The 30% floating sleeve is Kamino USDC Main, a senior over-collateralised lending reserve.
+  </Accordion>
+
+  <Accordion title="❌ Junior tranche / insurance pool designs (RLP, jrUSDe)">
+    **Not used.** Neither sleeve buys into a first-loss junior tranche. PT-ONyc holders are senior claimants on the reinsurance premium stream — not equity-tranche underwriters. Kamino USDC Main depositors are senior lenders, not subordinate risk-takers.
+  </Accordion>
+
+  <Accordion title="❌ DEX LP vaults (JLP, HLP, LLP)">
+    **Not used.** No DEX liquidity provision, no impermanent-loss exposure. Capital sits in PT bonds and senior lending reserves, both of which have a defined principal redemption path independent of market-maker inventory risk.
+  </Accordion>
+
+  <Accordion title="❌ High-leverage looping (health rate below 1.05 on non-hardcoded oracle assets)">
+    **Not used.** Kamino deposits are supply-only — no borrowing, no looping, no leverage. Health rate is effectively infinite. Exponent PT holdings are spot positions, not margined.
+  </Accordion>
+</AccordionGroup>
+
+## Side-track exclusion
+
+The **Drift side-track was removed** from the hackathon after recent security events. SaveToWin has **no Drift dependency** — no Drift perps, no Drift vaults, no Drift LP. Compatible with the consolidated Main Track rules.
+
+## Summary line
+
+> USDC base · 10.42% blended APY · 3-mo rolling lock · No YBS loops / jr tranches / DEX LP / high-leverage loops · No Drift.
+
+Paste this into any submission form "eligibility" field. Every claim is grounded in the [addresses](/sdk/addresses) and the live-tx index on the [Verification](/verification) page.
