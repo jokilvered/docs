@@ -3,10 +3,10 @@
   "name": "SaveToWin",
   "theme": "luma",
   "logo": {
-    "light": "https://media.brand.dev/3ec5ad42-69d7-4bc0-ad19-7d44a4ad159b.svg",
-    "dark": "https://media.brand.dev/3ec5ad42-69d7-4bc0-ad19-7d44a4ad159b.svg"
+    "light": "https://savetowin-rngr.s3.eu-west-1.amazonaws.com/savetowin-logo.png",
+    "dark": "https://savetowin-rngr.s3.eu-west-1.amazonaws.com/savetowin-logo.png"
   },
-  "favicon": "https://media.brand.dev/0c8df80a-6bb1-4e6e-8266-890aaa4a2577.jpg",
+  "favicon": "https://savetowin-rngr.s3.eu-west-1.amazonaws.com/savetowin-logo.png",
   "colors": {
     "primary": "#0ae8b5",
     "light": "#d8acee",
