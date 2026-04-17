@@ -14,6 +14,19 @@ SaveToWin is deployed live on Solana mainnet. Every claim in the hackathon submi
 
 Solana's first principal-protected prize-linked savings vault backed by real-world reinsurance yield, with an **on-chain auto-rolling** PT market discovery layer — the strategy bot scans all 94 Exponent markets every epoch, picks the best live ONyc-backed PT by maturity + APY + liquidity, and rolls without a code push.
 
+## Judging criteria map
+
+Each Ranger Main Track criterion maps directly to one or more pages in this documentation. Open the linked page for the full evidence.
+
+| Criterion | Evidence | Primary link |
+|---|---|---|
+| **Strategy Quality & Edge** | Reinsurance yield uncorrelated to DeFi cycles; 10.42% blended APY from live on-chain reads; PT-ONyc + Kamino = correlated-independent sleeves | [Yield Engine Overview](/yield/overview) · [Reinsurance sleeve](/yield/reinsurance) |
+| **Risk Management** | 30% Kamino sleeve for instant withdrawals; AutoMarketOpts filters (min-depth, maturity window, APY clamp); `ptMatured` redemption path; idle buffer guard in epoch rebalancer | [Safety FAQ](/faq/safety) · [Lending sleeve](/yield/lending) · [Reinsurance sleeve](/yield/reinsurance) |
+| **Technical Implementation** | 2 audit rounds (12 findings resolved), 28 tests (19 integration, 9 unit), full Exponent CPI via downloaded IDL, Kamino direct + Voltr CPI, on-chain IDL upload | [Architecture](/architecture) · [SDK Overview](/sdk/overview) |
+| **Production Viability** | Deployed mainnet with vanity program ID, 394 KB binary (`opt-level="z"`), idempotent config init, Jupiter routing verified to $100k at <0.03% slip | [Architecture](/architecture) · [Addresses](/sdk/addresses) |
+| **Novelty & Innovation** | **Auto-rolling market discovery** (no code push on maturity); **streak multiplier** (32× odds); **rolling jackpot** (10%/epoch); **$SAVE points** — first combined flywheel on Solana; first reinsurance-backed prize vault | [Verification #novelty](#novelty-auto-rolling-on-chain-market-discovery) · [Streak multiplier](/concepts/streak) · [Rolling jackpot](/concepts/jackpot) · [$SAVE points](/concepts/points) |
+| **Eligibility** | USDC base; 10.42% blended APY; 3-mo rolling lock; none of the disqualified yield sources; no Drift dependency | [Eligibility](/eligibility) |
+
 ## Program deployment
 
 | Check | Link |
@@ -89,7 +102,7 @@ npx ts-node --transpile-only scripts/test-market-discovery.ts     # Exponent sca
   The [Yield Engine overview](/yield/overview) uses a more conservative **10.3% design target** derived from trailing two-year Kamino averages. The **10.42% number above is a live snapshot** from 2026-04-14. Both clear the 10% hackathon floor.
 </Note>
 
-## Novelty — auto-rolling on-chain market discovery
+## Novelty: auto-rolling on-chain market discovery
 
 The strategy bot has **no hardcoded PT market address**. Every epoch it:
 
@@ -151,3 +164,27 @@ cd strategy-bot && npx ts-node --transpile-only ../scripts/capture-mainnet-event
     `prize_pool_balance` inflates virtually; actual payout is capped by real token balance. Documented in `settle_draw.rs`.
   </Accordion>
 </AccordionGroup>
+
+## Commit trail — narrative arc
+
+The full build is 83 commits on [`jokilvered/savetowin`](https://github.com/jokilvered/savetowin). A 15-commit narrative arc:
+
+```
+0f06611 Scaffold Anchor workspace for PrizeVault
+e5ff141 Implement PrizeVault Anchor program with 6 instructions
+2dcb8a7 Security audit round 2: fix 4 critical + 2 high issues
+d8df07c feat: Integrate PrizeVault with Ranger Earn via voltr-vault-cpi
+88e74be feat(strategy-bot): Risk-Adjusted Yield Curve Arbitrage bot MVP
+8d8cddb feat(prize-vault): streak multiplier + rolling jackpot (Triple Flywheel Day 1)
+ddde269 feat(strategy-bot): reinsurance barbell — Exponent + Kamino-direct adapters (Day 2)
+04a1eff feat(demo): E2E Triple Flywheel demo script on surfpool fork
+8c033e6 feat(strategy-bot): Jupiter aggregator USDC ↔ ONyc — mainnet verified
+2c4f8b0 feat(auto-roll): on-chain market discovery — strategy auto-finds live PT market
+b5fb24f refactor(sdk): extract @savetowin/sdk — single import surface for all consumers
+2ecbc6c feat(web): Phase 1 — Next.js scaffold + wallet adapter + live home page
+b4351e5 feat: two-phase queue withdraw (Voltr Option A) end-to-end
+2c4dd3e feat(bot): wire Kamino 30% sleeve — convert kit ixs to web3.js + send
+c851b4c fix(bot,sdk): audit findings — critical fixes before demo
+```
+
+Full log: [`github.com/jokilvered/savetowin/commits/main`](https://github.com/jokilvered/savetowin/commits/main).

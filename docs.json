@@ -13,9 +13,21 @@
     "dark": "#b745f0"
   },
   "navbar": {
+    "links": [
+      {
+        "label": "Earn Bounty",
+        "href": "https://superteam.fun/earn/listing/ranger-build-a-bear-hackathon-main-track"
+      }
+    ],
     "primary": {
       "type": "github",
       "href": "https://github.com/jokilvered/savetowin"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/jokilvered/savetowin",
+      "website": "https://superteam.fun/earn/listing/ranger-build-a-bear-hackathon-main-track"
     }
   },
   "navigation": {
