@@ -1,0 +1,65 @@
+---
+title: "How SaveToWin generates yield for prize draws"
+description: "SaveToWin targets 10.3% blended APY by splitting your deposit across two uncorrelated yield sources: fixed reinsurance yield and floating USDC lending."
+---
+
+SaveToWin generates yield by deploying your USDC into two independent strategies simultaneously. Seventy percent goes into a fixed-yield position backed by real-world reinsurance premiums, and thirty percent stays in a liquid lending reserve on Kamino Finance. The combination targets a blended 10.3% APY — enough to fund meaningful prizes while keeping your principal safe and a portion of your deposit instantly withdrawable at all times.
+
+## The two-sleeve strategy
+
+| Sleeve | Weight | Target APY | Source | Redeemable |
+|---|---|---|---|---|
+| PT-ONyc (reinsurance) | 70% | 13% fixed | Exponent Finance / OnRe | At maturity (2026-05-13), then auto-rolls |
+| Kamino USDC Main | 30% | ~4% floating | Kamino Finance lending | Instant |
+
+The sleeves are designed to be uncorrelated. Reinsurance premiums are driven by hurricane seasons, earthquake activity, and other real-world catastrophe risk — none of which has any relationship to crypto market cycles. When DeFi lending rates compress, reinsurance yield holds steady, and vice versa.
+
+## How the blended APY is calculated
+
+The 10.3% target comes from a weighted average of both sleeve rates:
+
+```
+Blended APY = (0.70 × 13.00%) + (0.30 × 4.00%)
+            = 9.10% + 1.20%
+            = 10.30%
+```
+
+The 13% fixed rate on PT-ONyc was verified live on Exponent Finance on 2026-04-13. The ~4% floating rate on Kamino USDC Main reflects the trailing two-year realized average sourced from DeFiLlama. The Kamino rate fluctuates with market demand for USDC borrowing, so the actual blended figure will vary over time.
+
+<Info>
+  A backtest proxy using Pendle PT-sUSDe (EVM, 2024–25) and CAT bond data (TradFi, 2015–24) suggests a realized blended rate of approximately 9.6% trailing 365 days — within 100 basis points of the 10.3% design target.
+</Info>
+
+## How yield is split between prizes and compounding
+
+Not all yield goes to the prize pool. Each epoch, yield is distributed as follows:
+
+- **20%** flows into the prize pool for that epoch's draw
+- **80%** stays in the vault, compounding your position
+
+This 20/80 split is set at the protocol level (`yield_split_bps = 2000`). The prize pool accumulates yield every day. If an epoch has no valid winner — for example because the jackpot rolled over — the 20% portion also rolls forward, growing the next prize by a further 10%.
+
+<Tip>
+  Because 80% of yield compounds back into your deposit, your principal grows over time even without winning a prize.
+</Tip>
+
+## Seeding phase: what happens before the TVL threshold
+
+During the early seeding phase, 100% of deposited USDC sits in the Kamino USDC Main lending reserve. The 70/30 reinsurance split activates automatically once total vault TVL crosses the minimum deployment threshold for the PT-ONyc position.
+
+<Note>
+  While the vault is in seeding mode, your deposit still earns the Kamino floating rate (~4% APY). The reinsurance sleeve is added on top once there is sufficient TVL to deploy efficiently into the PT-ONyc market.
+</Note>
+
+Once the threshold is crossed, the strategy bot deploys the 70/30 allocation and the full blended rate kicks in. You do not need to take any action — the rebalancer handles this automatically.
+
+## Learn more about each sleeve
+
+<CardGroup cols={2}>
+  <Card title="Fixed yield from reinsurance" icon="shield" href="/yield/reinsurance">
+    How PT-ONyc earns 13% fixed APY from real-world insurance premiums, and what the risks are.
+  </Card>
+  <Card title="Flexible yield from lending" icon="building-columns" href="/yield/lending">
+    How the Kamino USDC sleeve provides instant liquidity and earns floating interest.
+  </Card>
+</CardGroup>

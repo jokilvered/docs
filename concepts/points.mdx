@@ -1,0 +1,82 @@
+---
+title: "$SAVE points and the future airdrop snapshot"
+description: "Earn $SAVE points for every USDC-day deposited, multiplied by your streak. Points accumulate on-chain toward a potential future $SAVE token airdrop."
+---
+
+$SAVE points are a measure of your loyalty to the SaveToWin protocol. They accumulate every day you keep USDC in the vault, and they grow faster the longer your streak. Points are not a token yet — there is no $SAVE token to claim today. Instead, they are an on-chain-verifiable record of your contribution to the protocol, which will determine your allocation when a future airdrop snapshot is taken.
+
+<Note>
+  $SAVE points are a promise recorded on-chain, not a transferable token. Every major DeFi protocol of the 2024–2026 cycle started this way: EigenLayer reached $15B TVL before its token launched, Pendle grew to $6B, and Ethena to $5B — all on points programs alone. Your points accumulation is permanent and fully auditable from on-chain events.
+</Note>
+
+## How points are calculated
+
+Your points balance grows according to this formula:
+
+```
+points = USDC-days × streak_multiplier
+```
+
+Where:
+
+- **USDC-days** is the sum of (your average USDC balance × the number of days you held it). Depositing 100 USDC for 10 days earns 1,000 USDC-days.
+- **streak_multiplier** is `1 << streak_count`, the same multiplier that applies to your prize draw odds — 1×, 2×, 4×, 8×, 16×, or 32×.
+
+| Example scenario | USDC-days | Streak multiplier | Points earned |
+|---|---|---|---|
+| 100 USDC for 1 day, streak 0 | 100 | 1× | 100 |
+| 100 USDC for 1 day, streak 3 | 100 | 8× | 800 |
+| 500 USDC for 7 days, streak 5 | 3,500 | 32× | 112,000 |
+
+This means a depositor with a strong streak earns significantly more points per USDC than a new depositor — even at the same balance and duration. Time in the vault and streak discipline are both rewarded.
+
+## How points are indexed
+
+Points are not stored directly on-chain as a single balance. Instead, they are computed from on-chain events emitted by the PrizeVault program:
+
+- **`Deposit` events** record when you add USDC to the vault, including your balance and timestamp.
+- **`StreakUpdated` events** record when your streak count changes — both increments and resets.
+
+An off-chain indexer (the event tailer) reads these events from the Solana program logs and maintains a points ledger: an append-only audit log of all events, and a computed points balance for every depositor address. Because the source of truth is on-chain, the full ledger can be replayed from scratch at any time by re-reading all historical events — making it tamper-evident and independently verifiable.
+
+<Info>
+  You do not need to do anything to earn points. As long as you have USDC deposited and your streak is active, points accumulate automatically with every epoch.
+</Info>
+
+## The leaderboard
+
+The leaderboard ranks the top 100 depositors by their lifetime points balance. It is published as a JSON export and displayed on the web app's leaderboard page. Your ranking reflects the combination of how much USDC you have deposited, how long you have held it, and how high your streak has been over that period.
+
+The leaderboard updates with each epoch settlement. You can track your position in real time on the web app.
+
+## How the airdrop snapshot works
+
+When the time comes for a $SAVE token launch, the airdrop snapshot will be computed by replaying every `Deposit` and `StreakUpdated` event from the beginning of the protocol. This means:
+
+- No points are retroactively lost or altered.
+- The calculation is deterministic — anyone can independently verify their allocation by replaying the same on-chain events.
+- Points earned today count toward the snapshot, even if you withdraw before the snapshot date.
+
+<Tip>
+  Depositing early and maintaining a long streak is the most points-efficient strategy. Because the streak multiplier compounds your points rate up to 32×, a depositor who builds and holds a max streak earns 32 times more points per USDC per day than someone starting fresh — making early commitment disproportionately valuable in the final allocation.
+</Tip>
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Is there a $SAVE token I can buy today?">
+    No. $SAVE is not a token yet and there is no secondary market for points. The points program is a pre-token loyalty system, similar to how EigenLayer, Pendle, and Ethena operated before their token launches. An airdrop snapshot date has not been announced.
+  </Accordion>
+  <Accordion title="Do my points reset if I withdraw?">
+    No. Points earned are permanent — they reflect your historical contribution to the protocol. Withdrawing stops future points accumulation, but points you have already earned remain in the ledger and count toward the airdrop snapshot.
+  </Accordion>
+  <Accordion title="Does a streak reset affect my already-earned points?">
+    Existing points are never removed. However, a streak reset means future points accumulate at the lower 1× rate until your streak rebuilds. Points earned during a high-streak period are locked in permanently.
+  </Accordion>
+  <Accordion title="Can I verify my own points independently?">
+    Yes. Every input event is an on-chain Solana program log emitted by the PrizeVault program (`save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8`). You can replay the full event history from on-chain data and reproduce the points ledger independently using any Solana RPC. The leaderboard JSON is published alongside the on-chain program logs for cross-reference.
+  </Accordion>
+  <Accordion title="Will there be a minimum points threshold for the airdrop?">
+    No minimum has been announced. Allocation methodology for the future airdrop has not been finalized. Accumulating points now ensures you have an on-chain record regardless of how the distribution is structured.
+  </Accordion>
+</AccordionGroup>

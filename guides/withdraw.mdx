@@ -1,0 +1,64 @@
+---
+title: "Withdraw USDC from SaveToWin without losing your streak"
+description: "Queue a withdrawal from the vault and receive your USDC back in your wallet within minutes — no penalties, but watch your streak before going to zero."
+---
+
+You can withdraw your USDC from SaveToWin at any time. Withdrawals are processed in a queue: you submit a request, and a keeper bot automatically pulls liquidity from the underlying lending strategy and delivers it to your wallet — no second signature needed. Most withdrawals settle within about five minutes.
+
+## Two things to know before you withdraw
+
+**Partial withdrawals preserve your streak.** As long as your vault balance stays above zero after the withdrawal, your streak count and multiplier carry forward unchanged into the next epoch.
+
+**A full withdrawal to zero resets your streak.** If you withdraw everything — leaving nothing in the vault — your streak counter resets to zero. Your next deposit starts a new streak at 1×.
+
+<Warning>
+  Withdrawing your entire balance resets your streak to zero. Your multiplier will restart at **1×** on your next deposit. If you have a high streak (and therefore elevated winning odds), consider leaving a small amount in the vault to preserve it.
+</Warning>
+
+<Note>
+  Resetting your streak does not affect prizes you've already won. Any USDC you received from a previous draw stays in your wallet. Only future winning odds are affected.
+</Note>
+
+## How to withdraw
+
+<Steps>
+  <Step title="Go to the vault">
+    Open the SaveToWin web app and navigate to the **Vault** page (`/vault`). Connect your wallet if you haven't already.
+  </Step>
+  <Step title="Find the Withdraw section">
+    Below the deposit form you'll see the **Withdraw** panel. Your current vault balance is shown — use the **Max** button to pre-fill the maximum withdrawable amount, or type a specific amount.
+  </Step>
+  <Step title="Enter the amount">
+    Type how much USDC you want to withdraw, or click **Max** to withdraw as much as possible. If you click Max, the form will flag that this will reset your streak so you know before you confirm.
+  </Step>
+  <Step title="Queue the withdrawal">
+    Click **Queue withdrawal**. Your wallet opens and asks you to approve the transaction. Confirm it. The vault burns your stwUSDC tickets and creates a withdrawal receipt on-chain.
+  </Step>
+  <Step title="Receive your USDC">
+    A keeper bot monitors pending withdrawals and settles them automatically — usually within five minutes. Your USDC arrives in your wallet without any further action from you.
+  </Step>
+</Steps>
+
+## Understanding the withdrawal queue
+
+SaveToWin uses a two-phase withdrawal system backed by the Kamino liquid lending sleeve:
+
+**Instant settlement (most withdrawals):** When liquidity is available in the liquid portion of the vault, the keeper settles your withdrawal almost immediately. In practice, the five-minute window covers the time the bot needs to pull funds from the lending strategy.
+
+**Queued settlement (larger amounts):** For very large withdrawals that require the keeper to redeem from deeper liquidity, the process is the same from your side — you submit one request and wait — but settlement may take slightly longer while the strategy unwinds.
+
+Either way, you submit a single transaction and your USDC arrives automatically. You do not need to return to the app or sign anything else.
+
+<Info>
+  Only one withdrawal request can be in flight at a time per vault. If the vault is currently processing another user's withdrawal, the form will show **Vault busy — try again shortly**. This usually resolves within a few minutes.
+</Info>
+
+## Protecting your streak
+
+If you want to exit most of your position while keeping your streak alive, withdraw everything except a small amount. Even $0.01 left in the vault is enough to preserve your streak counter into the next epoch.
+
+| Action | Streak outcome |
+|---|---|
+| Partial withdrawal (balance > 0) | Streak preserved |
+| Full withdrawal (balance = 0) | Streak resets to 0 |
+| No withdrawal this epoch | Streak increments |

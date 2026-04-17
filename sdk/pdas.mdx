@@ -1,0 +1,270 @@
+---
+title: "PDA helpers for the SaveToWin PrizeVault program"
+description: "Synchronous helpers for deriving every Program Derived Address used by the SaveToWin PrizeVault and the Voltr vault — no RPC call needed."
+---
+
+All PDA derivation in `@savetowin/sdk` lives in `pdas.ts` and is intentionally pure: the functions accept only `PublicKey` values and optional epoch numbers, make no network calls, and return `[PublicKey, bump]` synchronously. Every instruction builder calls these internally — you only need them directly when you want to read a specific account without going through a higher-level helper.
+
+<CodeGroup>
+
+```typescript import-pdas.ts
+import {
+  findConfigPda,
+  findTicketMintPda,
+  findPrizePoolPda,
+  findUserTwabPda,
+  findDrawPda,
+  findPendingWithdrawPda,
+  findVoltrProtocolPda,
+  findVoltrAssetIdleAuth,
+  findVoltrLpMintAuth,
+} from "@savetowin/sdk";
+```
+
+</CodeGroup>
+
+---
+
+## PrizeVault PDAs
+
+### findConfigPda
+
+Derives the `PrizeVaultConfig` account for the given admin. This is the root account for a vault deployment — it stores epoch state, prize pool balance, total tickets, and references to Voltr accounts.
+
+```typescript
+export function findConfigPda(admin: PublicKey): [PublicKey, number]
+```
+
+**Seeds:** `["prize_vault", admin]`
+
+<CodeGroup>
+
+```typescript find-config.ts
+import { PublicKey } from "@solana/web3.js";
+import { findConfigPda } from "@savetowin/sdk";
+
+const admin  = new PublicKey("87LkTuUHB4QB8xhwFUnksXXcRZb64dXHD7jvqVLhQi6t");
+const [config, bump] = findConfigPda(admin);
+console.log("Config PDA:", config.toBase58(), "bump:", bump);
+```
+
+</CodeGroup>
+
+---
+
+### findTicketMintPda
+
+Derives the spl-token mint that represents prize tickets. Depositors receive one ticket per USDC base unit deposited. The PDA is the mint authority, so only the program can mint or burn tickets.
+
+```typescript
+export function findTicketMintPda(config: PublicKey): [PublicKey, number]
+```
+
+**Seeds:** `["ticket_mint", config]`
+
+<CodeGroup>
+
+```typescript find-ticket-mint.ts
+import { findConfigPda, findTicketMintPda } from "@savetowin/sdk";
+
+const [config]      = findConfigPda(admin);
+const [ticketMint]  = findTicketMintPda(config);
+console.log("Ticket mint:", ticketMint.toBase58());
+```
+
+</CodeGroup>
+
+---
+
+### findPrizePoolPda
+
+Derives the token account that accumulates yield allocated to the current prize pool. This account holds USDC that will be transferred to the draw winner.
+
+```typescript
+export function findPrizePoolPda(config: PublicKey): [PublicKey, number]
+```
+
+**Seeds:** `["prize_pool", config]`
+
+<CodeGroup>
+
+```typescript find-prize-pool.ts
+import { findConfigPda, findPrizePoolPda } from "@savetowin/sdk";
+
+const [config]     = findConfigPda(admin);
+const [prizePool]  = findPrizePoolPda(config);
+console.log("Prize pool ATA:", prizePool.toBase58());
+```
+
+</CodeGroup>
+
+---
+
+### findUserTwabPda
+
+Derives the `UserTwab` account that stores a specific user's time-weighted average balance, streak count, and lifetime points. This account is created on first deposit and updated on every balance change.
+
+```typescript
+export function findUserTwabPda(
+  config: PublicKey,
+  user: PublicKey
+): [PublicKey, number]
+```
+
+**Seeds:** `["user_twab", config, user]`
+
+<CodeGroup>
+
+```typescript find-user-twab.ts
+import { PublicKey } from "@solana/web3.js";
+import { findConfigPda, findUserTwabPda } from "@savetowin/sdk";
+
+const admin  = new PublicKey("87LkTuUHB4QB8xhwFUnksXXcRZb64dXHD7jvqVLhQi6t");
+const user   = new PublicKey("YOUR_USER_PUBLIC_KEY");
+
+const [config]    = findConfigPda(admin);
+const [userTwab]  = findUserTwabPda(config, user);
+console.log("UserTwab PDA:", userTwab.toBase58());
+```
+
+</CodeGroup>
+
+---
+
+### findDrawPda
+
+Derives the `DrawState` account for a specific epoch. Each epoch has exactly one draw account that progresses through `Pending → Committed → Settled` states.
+
+```typescript
+export function findDrawPda(
+  config: PublicKey,
+  epoch: number | bigint | BN
+): [PublicKey, number]
+```
+
+**Seeds:** `["draw", config, epoch_le64]` — epoch is serialised as a little-endian `u64`.
+
+<CodeGroup>
+
+```typescript find-draw.ts
+import { findConfigPda, findDrawPda } from "@savetowin/sdk";
+
+const [config]  = findConfigPda(admin);
+const epoch     = 42;
+const [draw]    = findDrawPda(config, epoch);
+console.log(`Draw PDA for epoch ${epoch}:`, draw.toBase58());
+```
+
+</CodeGroup>
+
+---
+
+### findPendingWithdrawPda
+
+Derives the `PendingWithdraw` PDA opened during a two-phase withdrawal. This account records the user and amount until the Voltr withdrawal receipt is finalised and `claimWithdraw` is executed.
+
+```typescript
+export function findPendingWithdrawPda(config: PublicKey): [PublicKey, number]
+```
+
+**Seeds:** `["pending_withdraw", config]`
+
+<CodeGroup>
+
+```typescript find-pending-withdraw.ts
+import { findConfigPda, findPendingWithdrawPda } from "@savetowin/sdk";
+
+const [config]          = findConfigPda(admin);
+const [pendingWithdraw] = findPendingWithdrawPda(config);
+console.log("Pending withdraw PDA:", pendingWithdraw.toBase58());
+```
+
+</CodeGroup>
+
+---
+
+## Voltr PDAs
+
+### findVoltrProtocolPda
+
+Derives the Voltr protocol-level PDA used as a signer in Voltr CPI calls. This PDA must be passed as `voltrProtocol` in deposit and withdraw instructions.
+
+```typescript
+export function findVoltrProtocolPda(): [PublicKey, number]
+```
+
+**Seeds:** `["protocol"]` — derived against `VOLTR_PROGRAM_ID`.
+
+<CodeGroup>
+
+```typescript find-voltr-protocol.ts
+import { findVoltrProtocolPda } from "@savetowin/sdk";
+
+const [protocol, bump] = findVoltrProtocolPda();
+console.log("Voltr protocol PDA:", protocol.toBase58());
+```
+
+</CodeGroup>
+
+---
+
+### findVoltrAssetIdleAuth
+
+Derives the authority PDA that controls the vault's idle USDC token account. The idle ATA is where USDC sits between strategy allocations and is the source of funds for instant withdrawals.
+
+```typescript
+export function findVoltrAssetIdleAuth(vault: PublicKey): [PublicKey, number]
+```
+
+**Seeds:** `["vault_asset_idle_auth", vault]` — derived against `VOLTR_PROGRAM_ID`.
+
+<CodeGroup>
+
+```typescript find-idle-auth.ts
+import { PublicKey } from "@solana/web3.js";
+import { findVoltrAssetIdleAuth, VOLTR_VAULT } from "@savetowin/sdk";
+
+const [idleAuth] = findVoltrAssetIdleAuth(VOLTR_VAULT);
+console.log("Idle auth PDA:", idleAuth.toBase58());
+```
+
+</CodeGroup>
+
+---
+
+### findVoltrLpMintAuth
+
+Derives the authority PDA that controls the Voltr LP mint. LP tokens represent a proportional claim on the total assets in the Voltr vault.
+
+```typescript
+export function findVoltrLpMintAuth(vault: PublicKey): [PublicKey, number]
+```
+
+**Seeds:** `["vault_lp_mint_auth", vault]` — derived against `VOLTR_PROGRAM_ID`.
+
+<CodeGroup>
+
+```typescript find-lp-mint-auth.ts
+import { findVoltrLpMintAuth, VOLTR_VAULT } from "@savetowin/sdk";
+
+const [lpMintAuth] = findVoltrLpMintAuth(VOLTR_VAULT);
+console.log("LP mint auth PDA:", lpMintAuth.toBase58());
+```
+
+</CodeGroup>
+
+---
+
+## PDA summary
+
+| Function | Program | Seeds | Used for |
+|---|---|---|---|
+| `findConfigPda(admin)` | PrizeVault | `prize_vault`, admin | Root vault config |
+| `findTicketMintPda(config)` | PrizeVault | `ticket_mint`, config | Ticket token mint |
+| `findPrizePoolPda(config)` | PrizeVault | `prize_pool`, config | Prize accumulator |
+| `findUserTwabPda(config, user)` | PrizeVault | `user_twab`, config, user | Per-user TWAB + streak |
+| `findDrawPda(config, epoch)` | PrizeVault | `draw`, config, epoch_le64 | Per-epoch draw state |
+| `findPendingWithdrawPda(config)` | PrizeVault | `pending_withdraw`, config | Two-phase withdraw escrow |
+| `findVoltrProtocolPda()` | Voltr | `protocol` | Voltr CPI signer |
+| `findVoltrAssetIdleAuth(vault)` | Voltr | `vault_asset_idle_auth`, vault | Idle USDC authority |
+| `findVoltrLpMintAuth(vault)` | Voltr | `vault_lp_mint_auth`, vault | LP mint authority |

@@ -1,0 +1,137 @@
+---
+title: "buildDepositIxs: deposit USDC into the vault"
+description: "Build the Solana instructions needed to deposit USDC into the SaveToWin prize vault, including idempotent ATA creation for USDC and ticket token accounts."
+---
+
+`buildDepositIxs` composes all the instructions required to deposit USDC into the PrizeVault and receive ticket tokens in return. It derives every PDA and associated token address internally so you only need to supply the user public key, the admin whose config to deposit into, and the amount. The function returns an array of `TransactionInstruction` objects that you add to a `Transaction` and sign yourself.
+
+## Function signature
+
+```typescript
+export async function buildDepositIxs(p: DepositParams): Promise<TransactionInstruction[]>
+```
+
+### DepositParams
+
+<ParamField path="body.program" type="Program" required>
+  An Anchor `Program` instance for the PrizeVault IDL. Obtain one via `createSdkClient`.
+</ParamField>
+
+<ParamField path="body.user" type="PublicKey" required>
+  The depositor's public key. This account pays for ATA creation and signs the transaction.
+</ParamField>
+
+<ParamField path="body.admin" type="PublicKey" required>
+  The vault admin whose `PrizeVaultConfig` PDA to deposit into. The config PDA is derived as `findConfigPda(admin)`.
+</ParamField>
+
+<ParamField path="body.amountBaseUnits" type="bigint | number | BN" required>
+  The amount of USDC to deposit in base units (6 decimal places). 1 USDC = `1_000_000`. Accepts native `bigint`, plain `number`, or Anchor's `BN`.
+</ParamField>
+
+<ParamField path="body.usdcMint" type="PublicKey">
+  Override the USDC mint address. Defaults to mainnet USDC: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`.
+</ParamField>
+
+<ParamField path="body.voltrVault" type="PublicKey">
+  Override the Voltr vault address. Defaults to the SaveToWin vault: `AYfsjUSmHEksrqBVAyjmy4t9aDnHjc245jz2hrUWhMrc`.
+</ParamField>
+
+<ParamField path="body.voltrLpMint" type="PublicKey">
+  Override the Voltr LP mint address. Defaults to the SaveToWin LP mint: `KNxz3PQeNvPB2Xa4TYcwkZ2a7VCJgZLJnd6i9ho2EsE`.
+</ParamField>
+
+## Return value
+
+An array of `TransactionInstruction` objects in execution order:
+
+1. `createAssociatedTokenAccountIdempotent` — creates the user's USDC ATA if it does not exist.
+2. `createAssociatedTokenAccountIdempotent` — creates the user's ticket token ATA if it does not exist.
+3. The `deposit` instruction — transfers USDC from the user's ATA into the vault and mints an equal number of ticket tokens to the user.
+
+<Note>
+  The ATA creation instructions are idempotent: they are safe to include even if the accounts already exist and will not fail or charge rent twice.
+</Note>
+
+## Complete example
+
+<CodeGroup>
+
+```typescript deposit-example.ts
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
+import { Wallet } from "@coral-xyz/anchor";
+import { createSdkClient, buildDepositIxs } from "@savetowin/sdk";
+
+const connection = new Connection(
+  "https://api.mainnet-beta.solana.com",
+  "confirmed"
+);
+const keypair = Keypair.fromSecretKey(
+  Uint8Array.from(JSON.parse(process.env.WALLET_SECRET_KEY!))
+);
+const wallet = new Wallet(keypair);
+
+const { program } = createSdkClient(connection, wallet);
+
+const ADMIN = new PublicKey("87LkTuUHB4QB8xhwFUnksXXcRZb64dXHD7jvqVLhQi6t");
+const DEPOSIT_USDC = 50n * 1_000_000n; // 50 USDC in base units
+
+const ixs = await buildDepositIxs({
+  program,
+  user:            keypair.publicKey,
+  admin:           ADMIN,
+  amountBaseUnits: DEPOSIT_USDC,
+});
+
+const tx = new Transaction().add(...ixs);
+const sig = await sendAndConfirmTransaction(connection, tx, [keypair]);
+console.log("Deposit confirmed:", sig);
+```
+
+</CodeGroup>
+
+## Amount conversion
+
+USDC uses 6 decimal places. Multiply the human-readable amount by `1_000_000` to get base units:
+
+| Human amount | Base units |
+|---|---|
+| 1 USDC | `1_000_000` |
+| 10 USDC | `10_000_000` |
+| 100 USDC | `100_000_000` |
+
+<CodeGroup>
+
+```typescript amount-conversion.ts
+// Using bigint (recommended for precision)
+const oneUsdc     = 1_000_000n;
+const tenUsdc     = 10_000_000n;
+
+// Using number (safe up to ~9007 USDC before floating-point issues)
+const fiveUsdc    = 5_000_000;
+
+// Using BN (Anchor-compatible)
+import { BN } from "@coral-xyz/anchor";
+const twentyUsdc  = new BN(20_000_000);
+```
+
+</CodeGroup>
+
+## What happens on-chain
+
+When the `deposit` instruction is executed, the PrizeVault program:
+
+1. Transfers your USDC from `userUsdc` to the vault's USDC token account.
+2. CPIs into Voltr to deposit those funds into the `AYfsjUSmHEksrqBVAyjmy4t9aDnHjc245jz2hrUWhMrc` yield vault.
+3. Mints an equivalent number of ticket tokens (1 ticket per 1 base unit of USDC) to your ticket ATA.
+4. Updates your `UserTwab` account to record the new balance checkpoint for TWAB-weighted prize draws.
+
+<Tip>
+  Your deposited USDC earns yield through Voltr's Kamino lending strategy while you hold tickets. You never lose principal — tickets redeem 1:1 for USDC at withdrawal.
+</Tip>

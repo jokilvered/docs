@@ -1,0 +1,75 @@
+---
+title: "SaveToWin prize draws: how winners are selected"
+description: "Every epoch ends with a verifiable on-chain draw. Learn how winners are selected, what happens when a prize rolls over, and where to find draw history."
+---
+
+At the end of each epoch, SaveToWin runs a prize draw. A tamper-proof random number from Switchboard VRF selects a winner from all active depositors, weighted by their time-averaged balance and streak multiplier. The entire process happens on-chain — every draw, every winner, and every prize amount is permanently recorded and verifiable by anyone.
+
+You don't need to do anything to participate. As long as you hold a non-zero vault balance when the epoch closes, you're automatically entered.
+
+## How draws work
+
+Each epoch runs through a fixed sequence:
+
+1. **Yield is harvested**: The protocol collects yield from the lending strategy and adds 20% of it to the prize pool.
+2. **VRF draw fires**: Switchboard VRF generates a provably random number on-chain. No one — including the SaveToWin team — can predict or influence the result.
+3. **Winner is selected**: The random number is mapped to a depositor using TWAB-weighted, streak-multiplied odds. Depositors with more balance and higher streaks occupy a larger share of the selection range.
+4. **Prize is paid**: The winner receives the full prize pool directly to their wallet.
+
+<Note>
+  You don't need to sign a transaction or visit the app to claim a prize. Winnings are sent automatically to the winner's wallet when the draw settles.
+</Note>
+
+## How winning odds are calculated
+
+Your share of the prize draw depends on two things:
+
+**Time-weighted average balance (TWAB):** The vault tracks how long your USDC has been deposited during the epoch. Holding your balance for the full epoch gives you maximum weight. Late deposits count for less.
+
+**Streak multiplier:** Each consecutive epoch you stay deposited, your multiplier doubles — from 1× up to a cap of 32×. Your effective odds are your TWAB multiplied by your streak multiplier.
+
+A depositor with $50 at 32× has the same odds as a depositor with $1,600 at 1×.
+
+## Prize rollovers
+
+If no valid winner can be selected in a given epoch — for example, because there are no eligible depositors — the prize does not disappear. Instead, the current prize pool carries forward and grows by **10%**. The rollover prize is added to the next epoch's yield, creating a larger jackpot for the following draw.
+
+Rollovers can compound across multiple epochs if needed, which means the prize pool can grow significantly during quiet periods.
+
+<Info>
+  The total number of rollovers is shown in the leaderboard header so you can see at a glance how many times the prize has compounded.
+</Info>
+
+## Reading the draw history
+
+The **Draws** page (`/draws`) in the SaveToWin app lists every completed draw in reverse chronological order. Each entry shows:
+
+- **Epoch number**: Which epoch the draw belongs to
+- **Status**: Whether the draw is settled, pending, or rolled over
+- **Prize**: The USDC amount at stake for that epoch
+- **Winner**: The winning wallet address (abbreviated), or `— pending —` if the draw hasn't settled yet
+- **Tx**: A link to the DrawState account on Solscan so you can verify the result yourself
+
+<Steps>
+  <Step title="Open the draws page">
+    Navigate to the **Draws** page (`/draws`) in the SaveToWin app.
+  </Step>
+  <Step title="View draw history">
+    Scroll through the list of completed draws. Each row shows the epoch, prize amount, and winner.
+  </Step>
+  <Step title="Verify a draw on-chain">
+    Click **view ↗** on any draw row to open the DrawState account on Solscan. You can inspect the raw on-chain data, including the VRF proof, the prize amount, and the winner's address.
+  </Step>
+</Steps>
+
+## Countdown to the next draw
+
+When no draws have happened yet (genesis state), or between settled draws, the draws page shows a live countdown to the next epoch close alongside the current prize pool balance. This tells you exactly how long you have to deposit before the next draw fires.
+
+<Tip>
+  The prize pool balance shown on the draws page is the live amount at stake for the current epoch. If there have been rollovers, this number can be significantly larger than a single epoch's yield.
+</Tip>
+
+## Verifying randomness
+
+Every draw uses [Switchboard VRF](https://switchboard.xyz) — a verifiable random function that generates randomness on Solana with a cryptographic proof attached. The proof is published on-chain alongside the draw result so anyone can confirm the output was generated honestly and not manipulated after the fact. You can inspect the full proof through the Solscan link on any settled draw row.

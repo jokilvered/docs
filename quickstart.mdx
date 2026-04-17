@@ -1,0 +1,92 @@
+---
+title: "Get started: deposit USDC and win prizes on Solana"
+sidebarTitle: "Quick Start"
+description: "Deposit USDC into the SaveToWin prize vault in five steps: visit the app, connect a Solana wallet, get USDC, deposit, then check your live status."
+---
+
+You can go from zero to entered in the SaveToWin jackpot in about five minutes. All you need is a Solana wallet and some USDC. This guide walks you through each step.
+
+<Steps>
+  <Step title="Visit the app">
+    Open the SaveToWin web app in your browser. You'll land on the home page which shows the current jackpot size, epoch countdown, and a summary of how the vault works.
+
+    <Tip>
+      Bookmark the app URL so you can check your streak and jackpot status before each draw.
+    </Tip>
+  </Step>
+
+  <Step title="Connect your wallet">
+    Navigate to the **Vault** page (`/vault`) and click **Connect Wallet**. SaveToWin supports:
+
+    - **Phantom** — the most widely used Solana wallet
+    - **Solflare** — a strong alternative with hardware wallet support
+
+    Select your wallet from the connection modal. If you don't have a Solana wallet yet, download Phantom from [phantom.app](https://phantom.app) or Solflare from [solflare.com](https://solflare.com), create a new wallet, and save your seed phrase somewhere safe before returning here.
+
+    <Warning>
+      Never share your seed phrase with anyone, including SaveToWin. The app only ever asks you to sign transactions — it never requests your private key.
+    </Warning>
+  </Step>
+
+  <Step title="Get USDC on Solana">
+    SaveToWin accepts **Solana USDC** (mint: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`). If you don't have any, you have a few options:
+
+    - **Buy directly on a CEX** (Coinbase, Kraken, etc.) and withdraw USDC to your Solana wallet address.
+    - **Bridge from another chain** using a cross-chain bridge if you already hold USDC on Ethereum or another network.
+    - **Swap on-chain** using Jupiter ([jup.ag](https://jup.ag)) to convert SOL or another Solana token to USDC.
+
+    <Note>
+      You also need a small amount of SOL in your wallet to pay Solana transaction fees. A few cents worth of SOL is enough for many deposits and withdrawals.
+    </Note>
+  </Step>
+
+  <Step title="Deposit into the vault">
+    On the Vault page (`/vault`), enter the amount of USDC you want to deposit and click **Deposit**. Your wallet will ask you to approve the transaction.
+
+    Once confirmed on-chain:
+
+    - Your USDC moves into the SaveToWin vault.
+    - Your TWAB tracking begins immediately for the current epoch.
+    - Your streak starts at 1× — it increments automatically when you remain deposited into the next epoch.
+
+    <Note>
+      Your streak starts automatically the moment your deposit is confirmed. You don't need to do anything else — just stay deposited to keep it growing.
+    </Note>
+
+    You can deposit any amount. Larger balances increase your TWAB weight, which improves your odds proportionally.
+  </Step>
+
+  <Step title="Check your status">
+    After depositing, the Vault page shows your personal status panel:
+
+    - **Your balance** — USDC currently in the vault
+    - **Your TWAB** — your time-weighted average balance for the current epoch
+    - **Streak** — your current streak level and multiplier (1× through 32×)
+    - **$SAVE points** — your lifetime accumulated points
+
+    You can also visit the **Leaderboard** (`/leaderboard`) to see where you rank among all depositors by lifetime points, and the **Draws** page (`/draws`) to review past draw results.
+
+    <Tip>
+      Check back before each draw to see how large the jackpot has grown. If previous epochs had no winner, it could be significantly larger than the base amount.
+    </Tip>
+  </Step>
+</Steps>
+
+## Withdrawing
+
+You can withdraw your USDC at any time from the Vault page. There is no lock-up period. Your principal is always accessible.
+
+<Note>
+  Withdrawing your full balance resets your streak to zero. If you want to preserve your streak multiplier, keep at least some USDC in the vault.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="How it works" icon="circle-info" href="/how-it-works">
+    Learn how the vault generates yield, how draws are conducted, and how the streak, jackpot, and points mechanics interact.
+  </Card>
+  <Card title="What is SaveToWin?" icon="book-open" href="/introduction">
+    Read the full product overview including key terms and how SaveToWin differs from other savings products.
+  </Card>
+</CardGroup>

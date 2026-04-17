@@ -1,0 +1,232 @@
+---
+title: "Fetch vault accounts and decode events"
+description: "Fetch vault state with fetchPrizeVaultConfig, fetchUserTwab, and listAllDraws, and decode StreakUpdated and JackpotRollover events from transaction logs."
+---
+
+The `@savetowin/sdk` package exposes typed account fetchers built on top of Anchor's `program.account` namespace and a pure binary event decoder that works without an RPC connection. Together they give you everything you need to read vault state and react to on-chain activity in both server-side workers and edge functions.
+
+---
+
+## fetchPrizeVaultConfig
+
+Fetches the `PrizeVaultConfig` account for the given admin and returns a normalised snapshot. All `u64` and `i64` fields are returned as native `bigint` for precision; integer fields are `number`.
+
+### Signature
+
+```typescript
+export async function fetchPrizeVaultConfig(
+  program: Program,
+  admin: PublicKey
+): Promise<PrizeVaultConfig & { pubkey: PublicKey }>
+```
+
+### PrizeVaultConfig fields
+
+<ResponseField name="pubkey" type="PublicKey" required>
+  The derived config PDA address.
+</ResponseField>
+
+<ResponseField name="admin" type="PublicKey" required>
+  The admin wallet that initialised this vault.
+</ResponseField>
+
+<ResponseField name="usdcMint" type="PublicKey" required>
+  The USDC mint in use by this vault.
+</ResponseField>
+
+<ResponseField name="ticketMint" type="PublicKey" required>
+  The spl-token mint for prize tickets (1 ticket = 1 USDC base unit).
+</ResponseField>
+
+<ResponseField name="currentEpoch" type="number" required>
+  The current prize epoch number (increments on each draw).
+</ResponseField>
+
+<ResponseField name="epochDuration" type="number" required>
+  Duration of each epoch in seconds. Default is `86400` (1 day).
+</ResponseField>
+
+<ResponseField name="epochStartTs" type="number" required>
+  Unix timestamp (seconds) when the current epoch began.
+</ResponseField>
+
+<ResponseField name="prizePoolBalance" type="bigint" required>
+  Accumulated yield in the prize pool, in USDC base units.
+</ResponseField>
+
+<ResponseField name="totalTickets" type="bigint" required>
+  Total ticket tokens currently in circulation across all depositors.
+</ResponseField>
+
+<ResponseField name="yieldSplitBps" type="number" required>
+  Basis points of yield allocated to the prize pool. Default is `2000` (20%).
+</ResponseField>
+
+<ResponseField name="rolloverBps" type="number" required>
+  Basis points of the prize pool retained after an unclaimed draw (rollover). Default is `1000` (10%).
+</ResponseField>
+
+<ResponseField name="rolloversThisCycle" type="number" required>
+  Number of consecutive rollovers without a winner in the current cycle.
+</ResponseField>
+
+<ResponseField name="lastDepositTotal" type="bigint" required>
+  Total USDC deposited as of the last yield harvest snapshot.
+</ResponseField>
+
+<ResponseField name="voltrVault" type="PublicKey" required>
+  The Voltr vault address this config is connected to.
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```typescript fetch-config.ts
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { Wallet } from "@coral-xyz/anchor";
+import { createSdkClient, fetchPrizeVaultConfig } from "@savetowin/sdk";
+
+const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+const { program } = createSdkClient(connection, new Wallet(Keypair.generate()));
+
+const ADMIN = new PublicKey("87LkTuUHB4QB8xhwFUnksXXcRZb64dXHD7jvqVLhQi6t");
+const config = await fetchPrizeVaultConfig(program, ADMIN);
+
+console.log("Config PDA:       ", config.pubkey.toBase58());
+console.log("Current epoch:    ", config.currentEpoch);
+console.log("Prize pool (USDC):", Number(config.prizePoolBalance) / 1_000_000);
+console.log("Total tickets:    ", Number(config.totalTickets) / 1_000_000);
+console.log("Epoch duration:   ", config.epochDuration, "seconds");
+console.log("Rollover bps:     ", config.rolloverBps);
+```
+
+</CodeGroup>
+
+---
+
+## fetchUserTwab
+
+Fetches a user's `UserTwab` account, which stores the time-weighted average balance used for prize draw weighting. Returns `null` if the user has never deposited.
+
+```typescript
+export async function fetchUserTwab(
+  program: Program,
+  config: PublicKey,
+  user: PublicKey
+): Promise<(UserTwab & { pubkey: PublicKey }) | null>
+```
+
+Key fields on `UserTwab`:
+
+| Field | Type | Description |
+|---|---|---|
+| `currentBalance` | `bigint` | Current ticket balance in base units |
+| `streakCount` | `number` | Consecutive epochs with a non-zero balance (caps at `MAX_STREAK = 5`) |
+| `lastStreakEpoch` | `number` | Last epoch in which the streak was updated |
+| `lifetimePoints` | `bigint` | Cumulative TWAB points earned across all epochs |
+
+---
+
+## listAllDraws and fetchDraw
+
+`listAllDraws` returns all `DrawState` accounts for a config, sorted newest-first. `fetchDraw` fetches a single draw by epoch number.
+
+```typescript
+export async function listAllDraws(
+  program: Program,
+  config: PublicKey
+): Promise<Array<DrawState & { pubkey: PublicKey }>>
+
+export async function fetchDraw(
+  program: Program,
+  config: PublicKey,
+  epoch: number
+): Promise<(DrawState & { pubkey: PublicKey }) | null>
+```
+
+`DrawState` fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `epoch` | `number` | The epoch this draw belongs to |
+| `prizeAmount` | `bigint` | Prize pool at the time of the draw |
+| `winner` | `PublicKey` | The selected winner (zero-key if pending) |
+| `status` | `"Pending" \| "Committed" \| "Settled"` | Draw lifecycle state |
+| `commitSlot` | `number` | Slot at which randomness was committed |
+
+---
+
+## decodeEventFromLog
+
+`decodeEventFromLog` decodes a `StreakUpdated` or `JackpotRollover` event from a single raw program log line. It is pure — it requires no `Program` instance, no RPC connection, and no async I/O — making it suitable for edge functions and background workers.
+
+### Signature
+
+```typescript
+export function decodeEventFromLog(logLine: string): DecodedEvent | null
+```
+
+Returns `null` if the line is not a `Program data:` log line or does not match a known event discriminator.
+
+### DecodedEvent types
+
+**StreakUpdated**
+
+| Field | Type | Description |
+|---|---|---|
+| `user` | `string` | Base58 public key of the user whose streak changed |
+| `oldStreak` | `number` | Streak count before this deposit/withdrawal |
+| `newStreak` | `number` | Streak count after this deposit/withdrawal |
+| `epoch` | `number` | Epoch in which the streak was updated |
+| `balance` | `number` | User's ticket balance after the update |
+| `ts` | `number` | Unix timestamp of the update |
+
+**JackpotRollover**
+
+| Field | Type | Description |
+|---|---|---|
+| `epoch` | `number` | The epoch that rolled over without a winner |
+| `oldAmount` | `number` | Prize pool before rollover |
+| `newAmount` | `number` | Prize pool after rollover (after deducting rollover bps) |
+| `reason` | `number` | Rollover reason code (`0` = no depositors, `1` = winner invalid) |
+| `rolloversThisCycle` | `number` | Running count of consecutive rollovers |
+
+### Example
+
+<CodeGroup>
+
+```typescript decode-events.ts
+import { Connection, PublicKey } from "@solana/web3.js";
+import { decodeEventFromLog } from "@savetowin/sdk";
+
+const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+
+// Fetch transaction logs for a confirmed signature
+const tx = await connection.getTransaction("your_tx_signature_here", {
+  maxSupportedTransactionVersion: 0,
+});
+
+for (const logLine of tx?.meta?.logMessages ?? []) {
+  const event = decodeEventFromLog(logLine);
+  if (!event) continue;
+
+  if (event.name === "StreakUpdated") {
+    const { user, oldStreak, newStreak, epoch } = event.data;
+    console.log(`User ${user} streak: ${oldStreak} → ${newStreak} (epoch ${epoch})`);
+  }
+
+  if (event.name === "JackpotRollover") {
+    const { epoch, oldAmount, newAmount, reason } = event.data;
+    console.log(
+      `Epoch ${epoch} rolled over: ${oldAmount / 1e6} USDC → ${newAmount / 1e6} USDC (reason ${reason})`
+    );
+  }
+}
+```
+
+</CodeGroup>
+
+<Tip>
+  You can also subscribe to program logs in real time using `connection.onLogs` and pipe each log line through `decodeEventFromLog` to react to events as they land on-chain.
+</Tip>

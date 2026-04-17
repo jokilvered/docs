@@ -1,0 +1,86 @@
+---
+title: "Streak multiplier: how your odds compound"
+description: "Stay deposited across consecutive epochs and your prize-draw odds multiply from 1× up to 32×. Learn what grows your streak and what resets it."
+---
+
+Every time you stay deposited through a full epoch, your streak grows by one. The streak is not just a badge — it directly multiplies your weight in the prize draw. After five consecutive epochs, your effective odds are 32 times higher than a brand-new depositor with the same USDC balance. The streak is designed to reward loyalty and make walking away feel genuinely costly.
+
+## How the streak multiplier works
+
+Your prize weight is calculated as:
+
+```
+winner weight = avg_twab × (1 << streak_count)
+```
+
+`1 << streak_count` is a left bit-shift — a fast way of computing 2 to the power of your streak count. In plain terms:
+
+| Streak count | Multiplier | Odds vs. a 0-streak depositor |
+|---|---|---|
+| 0 (new depositor) | 1× | baseline |
+| 1 | 2× | 2× higher |
+| 2 | 4× | 4× higher |
+| 3 | 8× | 8× higher |
+| 4 | 16× | 16× higher |
+| 5+ (maximum) | 32× | 32× higher |
+
+The streak is capped at 5. Once you reach 5, your multiplier stays at 32× for as long as you remain deposited.
+
+<Info>
+  The multiplier stacks on top of your TWAB balance. A 32× streak on 100 USDC beats a 1× streak on 3,000 USDC in raw prize weight.
+</Info>
+
+## What increments your streak
+
+Your streak count increases by 1 at the end of each epoch in which you:
+
+- Held a non-zero USDC balance for the entire epoch, **or**
+- Deposited during the epoch and maintained a balance through to the draw
+
+Each epoch produces one draw. Staying deposited through that draw — regardless of whether you win — advances your streak.
+
+## What resets your streak
+
+<Warning>
+  Two actions reset your streak count back to 0:
+
+  1. **Skipping an epoch** — if your balance falls to zero at any point during an epoch, you do not qualify for that epoch's draw, and your streak resets at the next draw.
+  2. **Withdrawing to zero** — a full withdrawal resets the streak immediately. The next deposit starts you back at streak 0.
+</Warning>
+
+## What does NOT reset your streak
+
+**Partial withdrawals preserve your streak.** If you withdraw some of your USDC but keep at least some balance in the vault, your streak continues uninterrupted. You do not need to keep your entire original deposit — you just need to maintain a non-zero position through each epoch draw.
+
+This is intentional: you have full flexibility to manage your position size without losing your accumulated odds multiplier, as long as you never go to zero.
+
+<Tip>
+  Once your streak reaches 3 or higher, leaving the vault means starting from scratch — months of compounding multiplier wiped in a single transaction. Many depositors find themselves staying longer than they planned, simply because the cost of resetting feels too high. That feeling is the streak working exactly as designed.
+</Tip>
+
+## Streak and $SAVE points
+
+Your streak multiplier also applies to your $SAVE points accumulation. The formula is:
+
+```
+points = USDC-days × streak_multiplier
+```
+
+A 32× streak doubles the points you earn, on top of doubling your prize odds. Maintaining a long streak accelerates your position on the [leaderboard](/concepts/points) in two ways simultaneously.
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Does my streak reset if I lose a draw?">
+    No. Losing a draw has no effect on your streak. The streak only cares about whether you held a non-zero balance through the epoch — not whether you won.
+  </Accordion>
+  <Accordion title="What if I withdraw 99% of my balance — does the streak reset?">
+    No. Any non-zero balance preserves the streak. Even 1 USDC remaining in the vault keeps your streak alive. Only a withdrawal that brings your balance to exactly zero triggers a reset.
+  </Accordion>
+  <Accordion title="How long does it take to reach the maximum 32× multiplier?">
+    You reach maximum streak (count = 5) after five consecutive epochs with a non-zero balance. Since epochs are 1 day long, that is five days of continuous deposit to reach 32×. From that point on, every additional day maintains the maximum multiplier.
+  </Accordion>
+  <Accordion title="Can I see my current streak in the app?">
+    Yes. Your streak count and current multiplier are displayed on your account dashboard on the web app. The streak count is also stored on-chain in your `UserTwab` account, so it is publicly verifiable at any time.
+  </Accordion>
+</AccordionGroup>

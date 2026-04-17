@@ -1,0 +1,63 @@
+---
+title: "What is SaveToWin? No-loss prize savings on Solana"
+description: "SaveToWin is a principal-protected USDC prize vault on Solana. Earn real yield and compete for a growing jackpot — without ever risking your principal."
+---
+
+SaveToWin is a prize savings vault on Solana mainnet that turns your idle USDC into lottery tickets — without ever putting your principal at risk. You deposit USDC, the vault puts it to work earning real yield, and that yield funds a weekly jackpot prize. Every epoch, one depositor wins. If no one wins, the jackpot grows by 10%. Your money is always yours to take back.
+
+## How it's different
+
+Most savings products make you choose between safety and upside. A bank account is safe but boring. A lottery ticket has upside but you lose your stake. SaveToWin combines both: your USDC principal is always protected, and the yield your deposit generates funds a prize pool you compete for every week.
+
+The yield comes from real-world sources — 70% from PT-ONyc (Exponent Finance's principal token backed by OnRe reinsurance premiums, earning 13% fixed APY) and 30% from Kamino USDC lending (approximately 4% floating). That blends to **10.3% APY**, which flows entirely into the prize pool.
+
+<Note>
+  SaveToWin is live on Solana mainnet. Program ID: `save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8`
+</Note>
+
+## Key concepts
+
+**Epoch** — A fixed time window (currently one day) during which deposits are tracked, yield accrues, and one draw takes place. Each epoch ends with a prize draw that selects a winner.
+
+**Jackpot** — The accumulated prize pool funded by yield. If an epoch produces no eligible winner, the jackpot rolls over and grows by 10%, creating an ever-larger prize for the next draw.
+
+**TWAB (Time-Weighted Average Balance)** — The fair accounting system used to calculate your share of the prize pool. Your odds of winning reflect how much USDC you had on deposit and for how long during the epoch — not just your balance at draw time.
+
+**Streak** — A multiplier that rewards consecutive-epoch participation. Each epoch you stay deposited, your streak grows: 1×, 2×, 4×, 8×, 16×, up to 32× after five consecutive epochs. A streak multiplies your effective TWAB weight in the draw, giving long-term depositors significantly better odds. A full withdrawal resets your streak; partial withdrawals do not.
+
+**$SAVE Points** — An off-chain points system that tracks your USDC-days multiplied by your streak. Points accumulate automatically and appear on the leaderboard. No token has launched yet, but every major protocol that used this pattern (EigenLayer, Pendle, Ethena) eventually rewarded points holders.
+
+## Who SaveToWin is for
+
+SaveToWin is for anyone who holds USDC on Solana and wants their savings to do more than sit idle. You don't need to be a DeFi expert. You don't need to monitor positions or manage risk. Deposit USDC, keep it there, and you're automatically entered into every weekly draw for as long as you stay.
+
+<Warning>
+  SaveToWin does not guarantee prize winnings. Your USDC principal is always safe, but prize outcomes depend on the draw.
+</Warning>
+
+## The three growth mechanics
+
+SaveToWin stacks three mechanics that reward long-term participation:
+
+<CardGroup cols={3}>
+  <Card title="Streak multiplier" icon="fire">
+    Stay deposited across consecutive epochs to earn up to 32× winner weight. The longer you stay, the better your odds.
+  </Card>
+  <Card title="Rolling jackpot" icon="trophy">
+    Every epoch with no winner adds 10% to the jackpot. Missed draws compound into larger prizes, creating natural FOMO before big draws.
+  </Card>
+  <Card title="$SAVE points" icon="star">
+    Every USDC-day you're deposited earns points, multiplied by your streak. Points accumulate toward a future airdrop.
+  </Card>
+</CardGroup>
+
+## Explore SaveToWin
+
+<CardGroup cols={2}>
+  <Card title="Get started" icon="rocket" href="/quickstart">
+    Connect your wallet and make your first deposit in minutes.
+  </Card>
+  <Card title="How it works" icon="circle-info" href="/how-it-works">
+    Understand the full deposit-to-draw cycle and what drives your odds.
+  </Card>
+</CardGroup>

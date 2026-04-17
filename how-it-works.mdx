@@ -1,0 +1,129 @@
+---
+title: "How SaveToWin works: vault cycle, draws, and mechanics"
+sidebarTitle: "How It Works"
+description: "A complete walkthrough of the SaveToWin vault cycle: how deposits earn yield, how prize draws are conducted, and how the three growth mechanics stack."
+---
+
+SaveToWin runs a continuous cycle: users deposit USDC, the vault deploys that capital into yield-generating strategies, the yield funds a growing jackpot, and a verifiably random draw selects a winner weighted by each depositor's time-weighted balance. Your principal never leaves your control — you can withdraw at any time.
+
+<Note>
+  Your deposited USDC principal is always safe. You can withdraw at any time regardless of draw timing or jackpot status.
+</Note>
+
+## The deposit-to-draw cycle
+
+<Steps>
+  <Step title="Deposit USDC">
+    You deposit USDC into the SaveToWin vault on Solana. The vault records your deposit and begins tracking your Time-Weighted Average Balance (TWAB) for the current epoch.
+
+    TWAB is calculated as the integral of your balance over time. If you deposit 1,000 USDC halfway through an epoch, your TWAB for that epoch is 500 USDC — reflecting that you were only present for half the period. This makes the draw fair: you earn odds proportional to how long your money was working.
+  </Step>
+
+  <Step title="Yield generation">
+    The vault allocates deposited USDC across two yield sources using a fixed barbell strategy:
+
+    | Allocation | Protocol | Rate | Type |
+    |---|---|---|---|
+    | 70% | PT-ONyc via Exponent Finance | 13% fixed APY | Principal token backed by OnRe reinsurance premiums |
+    | 30% | Kamino USDC Main lending | ~4% floating APY | Senior USDC lending, instantly redeemable |
+
+    **Blended yield: 10.3% APY.** The fixed-rate sleeve locks in predictable returns from real-world reinsurance premiums — yield uncorrelated to DeFi market cycles. The floating sleeve keeps 30% of the vault liquid for instant withdrawals.
+
+    All generated yield flows into the prize pool, not back to depositors as interest. This is the core of the no-loss model: your principal is preserved, and yield becomes the prize.
+  </Step>
+
+  <Step title="Epoch boundary and draw">
+    Each epoch is one day long. At the end of an epoch, the vault harvests accrued yield into the prize pool, then conducts a draw.
+
+    Draw randomness comes from **Switchboard VRF** (Verifiable Random Function, program `SBondMDrcV3K4kxZR1HNVT7osZxAHVHgYXL5Ze1oMUv`), an on-chain oracle that produces cryptographically provable random numbers. This means neither the SaveToWin team nor anyone else can influence or predict the outcome of a draw.
+
+    The winner is selected from all depositors weighted by their streak-adjusted TWAB:
+
+    ```
+    Winner weight = TWAB × (1 << streak_count)
+    ```
+
+    A depositor with a higher balance and a longer streak has proportionally better odds, but any depositor can win.
+  </Step>
+
+  <Step title="Winner and rollover">
+    If a valid winner is selected, they receive the entire accumulated prize pool. The jackpot resets and begins building again for the next epoch.
+
+    If no valid winner exists — for example, if there were no eligible depositors — the jackpot rolls over. The prize pool grows by **10%** and carries forward to the next epoch's draw. This can compound across multiple epochs, creating significantly larger jackpots over time.
+  </Step>
+</Steps>
+
+## The three growth mechanics
+
+SaveToWin layers three independent mechanics on top of the base yield-and-draw cycle. Each one rewards continued participation.
+
+### Streak multiplier
+
+Every consecutive epoch you remain deposited, your streak count increases by one, up to a maximum of five. Your streak multiplies your winner weight in each draw:
+
+| Streak count | Multiplier |
+|---|---|
+| 0 | 1× |
+| 1 | 2× |
+| 2 | 4× |
+| 3 | 8× |
+| 4 | 16× |
+| 5 | 32× |
+
+A depositor on a five-epoch streak has 32× the winner weight per USDC compared to a brand-new depositor. This doesn't guarantee a win, but it substantially improves odds for loyal participants.
+
+**Streak rules:**
+- Your streak increments at the end of each epoch where you had a non-zero balance throughout.
+- Withdrawing your full balance resets your streak to zero.
+- A partial withdrawal preserves your streak as long as some balance remains.
+
+<Tip>
+  If you plan to withdraw, consider leaving a small amount in the vault to keep your streak alive.
+</Tip>
+
+### Rolling jackpot
+
+When an epoch draw produces no valid winner, the jackpot does not reset — it grows. Each missed draw adds 10% to the accumulated prize pool (`rollover_bps = 1000`). This rollover compounds: a jackpot that misses three consecutive draws grows by roughly 33%.
+
+The public jackpot display on the Vault page shows the current prize size and the time until the next draw. When the jackpot has been rolling for several epochs, the prize becomes large enough to attract significant new deposits, which in turn increases the yield base for future epochs.
+
+### $SAVE points
+
+Every USDC-day you are deposited earns $SAVE points, multiplied by your current streak:
+
+```
+Points per epoch = USDC balance × days in epoch × (1 << streak_count)
+```
+
+Points accumulate in an off-chain ledger indexed from on-chain events and are visible on the Leaderboard (`/leaderboard`). No $SAVE token exists yet. Points represent a claim on a potential future airdrop — every major protocol that used this mechanism (EigenLayer at $15B TVL, Pendle at $6B, Ethena at $5B) eventually converted points to tokens.
+
+<Info>
+  $SAVE points are recorded off-chain based on on-chain deposit and streak events. Your points balance updates after each epoch.
+</Info>
+
+## What keeps your principal safe
+
+The vault holds your USDC in the underlying yield protocols (Exponent Finance and Kamino), not in a smart-contract treasury controlled by SaveToWin. The principal is redeemable at any time via the `withdraw` instruction. Only yield — the amount above your deposited principal — ever enters the prize pool.
+
+The 30% Kamino allocation is instantly redeemable, meaning the vault can always service withdrawal requests without waiting for PT-ONyc to mature. If you withdraw before the PT-ONyc maturity date (2026-05-13), the vault redeems from the Kamino sleeve first.
+
+<Warning>
+  The PT-ONyc sleeve (70% of the vault) is backed by OnRe reinsurance premiums. OnRe has an 8-month track record. While reinsurance yield is uncorrelated to DeFi cycles, no yield source is entirely without risk. SaveToWin's on-chain program has been through two security audit rounds with all findings resolved.
+</Warning>
+
+## On-chain transparency
+
+Every action — deposit, withdrawal, yield harvest, draw request, draw settlement — is recorded as a Solana transaction on mainnet. You can verify the vault program directly:
+
+- **Program ID:** `save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8`
+- **Draw randomness:** Switchboard VRF (`SBondMDrcV3K4kxZR1HNVT7osZxAHVHgYXL5Ze1oMUv`)
+- **Past draws:** visible on the Draws page (`/draws`)
+
+<CardGroup cols={2}>
+  <Card title="Get started" icon="rocket" href="/quickstart">
+    Ready to deposit? Follow the step-by-step guide to make your first deposit.
+  </Card>
+  <Card title="What is SaveToWin?" icon="book-open" href="/introduction">
+    Review the product overview and key terms before diving into the mechanics.
+  </Card>
+</CardGroup>

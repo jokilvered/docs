@@ -1,0 +1,155 @@
+---
+title: "Install and configure the SaveToWin SDK"
+description: "Add @savetowin/sdk to your project, install peer dependencies, and create an Anchor Program instance connected to mainnet or a custom RPC endpoint."
+---
+
+The `@savetowin/sdk` package ships as a TypeScript-first workspace package with no build step required — the `main` and `types` fields both point to `src/index.ts`. If you are working inside the SaveToWin monorepo, your package manager resolves the dependency automatically. If you are consuming the SDK in an external project you can copy the source or publish it to a private registry first.
+
+## Prerequisites
+
+- **Node.js 18 or later** — the SDK uses native `bigint` and `Buffer`.
+- **`@coral-xyz/anchor` ^0.30.1** — the Anchor framework provides `Program`, `AnchorProvider`, and `Wallet`.
+- **`@solana/web3.js` ^1.95.0** — `Connection`, `PublicKey`, `Transaction`, and `Keypair`.
+- **`@solana/spl-token` ^0.4.14** — used internally by instruction builders.
+
+## Monorepo installation
+
+If your package lives inside the SaveToWin monorepo, add the SDK as a workspace reference:
+
+<CodeGroup>
+
+```json package.json
+{
+  "dependencies": {
+    "@savetowin/sdk": "workspace:*"
+  }
+}
+```
+
+</CodeGroup>
+
+Then run your workspace install command:
+
+<Tabs>
+  <Tab title="pnpm">
+    ```bash
+    pnpm install
+    ```
+  </Tab>
+  <Tab title="npm">
+    ```bash
+    npm install
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn install
+    ```
+  </Tab>
+</Tabs>
+
+## External installation
+
+If you are working outside the monorepo, install the peer dependencies directly and copy or publish the SDK:
+
+<Tabs>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @coral-xyz/anchor @solana/web3.js @solana/spl-token bn.js
+    ```
+  </Tab>
+  <Tab title="npm">
+    ```bash
+    npm install @coral-xyz/anchor @solana/web3.js @solana/spl-token bn.js
+    ```
+  </Tab>
+</Tabs>
+
+## Basic setup
+
+Use `createSdkClient` to instantiate an Anchor `Program` from a `Connection` and a `Wallet`. The function returns `{ connection, wallet, provider, program }` — pass `program` to every instruction builder and account fetcher.
+
+<CodeGroup>
+
+```typescript setup.ts
+import { Connection, Keypair } from "@solana/web3.js";
+import { Wallet } from "@coral-xyz/anchor";
+import { createSdkClient } from "@savetowin/sdk";
+
+// Connect to mainnet with confirmed commitment
+const connection = new Connection(
+  "https://api.mainnet-beta.solana.com",
+  "confirmed"
+);
+
+// Load your keypair however suits your environment
+const keypair = Keypair.fromSecretKey(
+  Uint8Array.from(JSON.parse(process.env.WALLET_SECRET_KEY!))
+);
+const wallet = new Wallet(keypair);
+
+// Create the SDK client — program is ready to use
+const { program, provider } = createSdkClient(connection, wallet);
+```
+
+</CodeGroup>
+
+### Using a custom commitment
+
+`createSdkClient` accepts an optional third argument for Solana commitment level:
+
+<CodeGroup>
+
+```typescript custom-commitment.ts
+import { Connection, Keypair } from "@solana/web3.js";
+import { Wallet } from "@coral-xyz/anchor";
+import { createSdkClient } from "@savetowin/sdk";
+
+const connection = new Connection("https://your-rpc-endpoint.com", "finalized");
+const wallet = new Wallet(keypair);
+
+// Pass "finalized" or any web3.js Commitment string
+const { program } = createSdkClient(connection, wallet, "finalized");
+```
+
+</CodeGroup>
+
+### Read-only usage without a wallet
+
+For read-only operations such as fetching accounts or deriving PDAs you do not need a signing wallet. You can pass a dummy `NodeWallet` backed by a throwaway keypair:
+
+<CodeGroup>
+
+```typescript read-only.ts
+import { Connection, Keypair } from "@solana/web3.js";
+import { Wallet } from "@coral-xyz/anchor";
+import { createSdkClient, fetchPrizeVaultConfig } from "@savetowin/sdk";
+
+const connection = new Connection("https://api.mainnet-beta.solana.com");
+const readOnlyWallet = new Wallet(Keypair.generate()); // never signs
+
+const { program } = createSdkClient(connection, readOnlyWallet);
+
+const config = await fetchPrizeVaultConfig(
+  program,
+  new PublicKey("87LkTuUHB4QB8xhwFUnksXXcRZb64dXHD7jvqVLhQi6t")
+);
+console.log("Current epoch:", config.currentEpoch);
+```
+
+</CodeGroup>
+
+<Tip>
+  For production use, point your `Connection` at a dedicated RPC provider (Helius, QuickNode, Triton) rather than the public mainnet endpoint. The public endpoint has aggressive rate limits that will cause failures under load.
+</Tip>
+
+## SdkClient type reference
+
+`createSdkClient` returns an `SdkClient` object with the following fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `connection` | `Connection` | The web3.js connection you passed in |
+| `wallet` | `Wallet` | The Anchor wallet used for signing |
+| `provider` | `AnchorProvider` | The Anchor provider wrapping connection + wallet |
+| `program` | `Program` | The instantiated PrizeVault Anchor program — pass this to all SDK functions |

@@ -1,0 +1,67 @@
+---
+title: "Rolling jackpot: how prizes grow over time"
+description: "When no winner is found in a draw, the SaveToWin jackpot grows by 10% and carries forward — compounding across epochs until someone wins the prize."
+---
+
+Every epoch, SaveToWin holds a prize draw. If a valid winner is found, they collect the full jackpot and the prize pool resets. If no valid winner is found — because there are no eligible depositors, or the randomness result is invalid — the jackpot does not disappear. Instead, it grows by 10% and carries forward to the next epoch. The longer a jackpot goes unclaimed, the larger it becomes, and the more attention it attracts.
+
+## Normal epoch vs. rollover epoch
+
+| Scenario | What happens |
+|---|---|
+| Valid winner found | Winner receives the full prize pool. Pool resets for the next epoch. |
+| No valid winner | Jackpot grows by 10% (rollover_bps = 1000 bps). No USDC is lost — it stays in the prize pool. |
+
+In a normal epoch, the cycle is simple: yield accumulates, 20% goes to the prize pool, a winner is drawn, and the pool starts fresh. A rollover epoch skips the winner step and instead inflates the carry-forward amount before the next epoch begins.
+
+## How the rollover math works
+
+Each rollover adds 10% to the current prize amount. This compounds on every consecutive rollover:
+
+| Epoch | Jackpot amount |
+|---|---|
+| Starting jackpot | $100.00 |
+| After 1 rollover | $110.00 |
+| After 2 rollovers | $121.00 |
+| After 3 rollovers | $133.10 |
+
+The formula is straightforward: `next_jackpot = current_jackpot × 1.10`. Each rollover applies on top of the previous result, so three unclaimed epochs turn a $100 prize into a $133.10 prize — before the next epoch's yield contribution is even added.
+
+<Info>
+  The 10% growth rate is set by `rollover_bps = 1000` (1000 basis points = 10%). This value is fixed in the on-chain program configuration and applies to every rollover epoch.
+</Info>
+
+## Why rollovers create a flywheel
+
+A growing jackpot does more than just reward patience. It acts as a visible signal that draws new depositors:
+
+1. **A larger jackpot headline attracts attention.** When the web app shows "$24,700 jackpot — next draw in 6h 12m", depositors who would have skipped a $2,400 draw may choose to deposit.
+2. **More depositors mean more yield.** A larger TVL generates more yield each epoch, which adds to the prize pool on top of the rollover growth.
+3. **More depositors also means more competition** — but with streak multipliers, early depositors who built up their odds retain a significant advantage over last-minute entrants.
+
+This is the same mechanism that makes Powerball and MegaMillions jackpots so effective at driving ticket sales: the bigger the number on the billboard, the more people want in.
+
+<Tip>
+  Depositing before a large rolled-over jackpot gives you immediate exposure to an above-average prize pool. If you also have an established streak, your weight in that draw is amplified at exactly the moment the prize is at its most attractive.
+</Tip>
+
+## Viewing the current jackpot
+
+The SaveToWin web app shows the current jackpot size and the countdown to the next draw on the main dashboard. The jackpot figure updates in real time as each epoch progresses and as rollovers are processed on-chain. You can also verify the on-chain prize pool balance at any time by looking up the vault's prize pool account on Solscan.
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Can the jackpot keep rolling indefinitely?">
+    In theory, yes — but it becomes increasingly unlikely as the prize grows. A larger jackpot attracts more depositors, which increases the chance of a valid winner being selected. In practice, extended rollover streaks tend to self-correct by drawing in new participants.
+  </Accordion>
+  <Accordion title="What triggers a rollover exactly?">
+    A rollover is triggered on-chain when the `settle_draw` instruction completes and either finds no eligible depositors or determines the selected winner is invalid. The `JackpotRollover` event is emitted on-chain with a reason code so you can see exactly why the rollover occurred.
+  </Accordion>
+  <Accordion title="Does the 10% growth come from my principal?">
+    No. The rollover growth is funded by the accumulated yield already in the prize pool — it is not deducted from anyone's principal. The prize pool itself grows; no depositor's balance is touched.
+  </Accordion>
+  <Accordion title="Is there a maximum jackpot size?">
+    There is no protocol-enforced cap on the jackpot. It grows until a valid winner is found and collects it.
+  </Accordion>
+</AccordionGroup>

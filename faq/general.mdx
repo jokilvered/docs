@@ -1,0 +1,60 @@
+---
+title: "Frequently asked questions about SaveToWin"
+description: "Answers to common questions about how SaveToWin works, what wallets are supported, how draws are held, and what the $SAVE points program offers."
+---
+
+SaveToWin is a no-loss prize savings vault on Solana. You deposit USDC, your principal stays protected at all times, and the yield your deposit generates funds a growing jackpot that is drawn every epoch. This page answers the questions users ask most often before and after making their first deposit.
+
+<AccordionGroup>
+  <Accordion title="What is SaveToWin?">
+    SaveToWin is a principal-protected prize savings vault on Solana. You deposit USDC and, rather than receiving your yield directly, that yield is pooled into a prize pot. Each epoch, one depositor wins the full pot. Your original deposit — the principal — is never at risk. If you do not win, you simply carry your position into the next epoch with the same odds or better.
+
+    The vault earns a blended 10.3% APY target from two sources: 70% allocated to PT-ONyc (fixed-yield real-world reinsurance via Exponent Finance) and 30% to Kamino USDC lending (floating, instant-redeemable). That yield funds every prize.
+  </Accordion>
+
+  <Accordion title="How do I win?">
+    Winning odds are proportional to your **time-weighted average balance (TWAB)** — the larger your deposit and the longer you hold it within an epoch, the greater your share of the prize pool. On top of that, a **streak multiplier** boosts your effective odds: staying deposited across consecutive epochs raises your weight by 2× per epoch, up to a maximum of 32×.
+
+    You do not need to take any action. As long as you hold a deposit, you are automatically eligible for every draw.
+  </Accordion>
+
+  <Accordion title="How often are draws held?">
+    One draw is held at the end of each epoch. The default epoch length is one day, so under normal conditions a draw takes place every 24 hours. The exact schedule depends on the vault configuration set at initialization and can be confirmed in the app.
+  </Accordion>
+
+  <Accordion title="What is an epoch?">
+    An epoch is a fixed time window — typically one day — during which yield accrues on all deposited USDC. At the end of each epoch, the vault harvests that yield, runs a Switchboard VRF draw to select a winner, and then starts the next epoch. Your streak and TWAB are both calculated over these epoch boundaries.
+  </Accordion>
+
+  <Accordion title="Do I have to do anything to participate in draws?">
+    No. Once you have a USDC deposit in the vault, you are automatically entered in every draw for as long as you hold that deposit. You do not need to claim tickets, sign transactions, or check in each epoch. Your odds update automatically based on your balance and streak.
+  </Accordion>
+
+  <Accordion title="Can I deposit any amount?">
+    Yes. There is no minimum deposit. Any USDC amount qualifies you for draws. Larger deposits produce higher TWAB values and therefore better odds of winning each epoch. Smaller deposits still participate — they just have proportionally lower odds.
+  </Accordion>
+
+  <Accordion title="What wallets are supported?">
+    SaveToWin currently supports **Phantom** and **Solflare**. Both wallets are available as browser extensions and mobile apps and support Solana mainnet with USDC. Connect your wallet from the app's top navigation bar to get started.
+  </Accordion>
+
+  <Accordion title="What is the $SAVE points program?">
+    $SAVE points are an off-chain loyalty ledger that tracks your accumulated USDC-days multiplied by your current streak. Points are recorded every time a deposit or streak event is indexed from on-chain logs.
+
+    <Warning>
+      $SAVE points are **not a token**. There is no $SAVE token contract and no tradeable asset at this time. Points represent a position on a future airdrop leaderboard if and when a token is launched — that outcome is a promise, not a guarantee. Every major DeFi protocol that eventually launched a token (EigenLayer, Pendle, Ethena) started with an off-chain points system like this one. We are being upfront: treat points as speculative loyalty credit, not financial return.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="What happens if no one wins a draw?">
+    If a draw completes without a valid winner — for example because the depositor base is too small for a clean random selection — the jackpot rolls over to the next epoch and grows by **10%**. This rollover continues until a winner is selected. The effect is a steadily growing prize pot that tends to attract more deposits before large draws.
+
+    <Note>
+      A fast-growing jackpot depends on there being a healthy number of depositors. Early in the vault's life, rollover draws may occur more frequently until the depositor base grows.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Where can I see past draws?">
+    All completed draws are listed at the **/draws** route in the SaveToWin web app. Each entry shows the epoch number, the prize amount, the winner address, and whether the jackpot rolled over. The on-chain `JackpotRollover` and draw settlement events are also visible on Solscan using the program ID `save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8`.
+  </Accordion>
+</AccordionGroup>

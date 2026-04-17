@@ -1,0 +1,82 @@
+---
+title: "Safety and risk: is my USDC protected in SaveToWin?"
+sidebarTitle: "Safety & Risk"
+description: "Honest answers about principal protection, smart contract risk, the OnRe reinsurance counterparty, audits, withdrawals, and the $SAVE points ledger."
+---
+
+Understanding the risks of any DeFi product is essential before you deposit. SaveToWin is designed so that your principal is always protected — only the yield is ever at risk of being used for prizes. This page explains how that works in practice and where the honest limitations are.
+
+<AccordionGroup>
+  <Accordion title="Is my principal at risk?">
+    No. SaveToWin is designed as a **principal-protected** vault. Only the yield your deposit earns is used to fund prizes. Your original USDC deposit is never transferred into a prize pool or put at risk of being paid out to a winner.
+
+    That said, "principal-protected" is a design property of the vault's on-chain logic, not an insurance guarantee. Smart contract bugs, counterparty failures, or extreme market conditions could still affect your deposit. See the other questions on this page for specific risk disclosures.
+  </Accordion>
+
+  <Accordion title="Is the code audited?">
+    Yes. The SaveToWin Anchor program has gone through **two rounds of security review**:
+
+    - **Round 1:** 5 findings identified and fixed before mainnet deployment.
+    - **Round 2:** 7 additional findings fixed, including issues in Kamino yield calculations, Switchboard VRF validation, stuck-draw recovery, winner validation logic, and account constraint checks.
+
+    <Note>
+      Audits reduce risk — they do not eliminate it. No audit guarantees that all vulnerabilities have been found. You should only deposit amounts you are comfortable holding in on-chain smart contract risk.
+    </Note>
+  </Accordion>
+
+  <Accordion title="What happens to my deposit if there's a bug?">
+    The program has been audited twice with a combined 12 findings resolved. However, no smart contract can be certified bug-free. If a previously unknown vulnerability were exploited, deposited funds could be affected.
+
+    Mitigations in place include the audit history, open-source Anchor code, and on-chain constraints that enforce principal separation from the prize pool. There is no protocol-level insurance fund at this stage of the project.
+  </Accordion>
+
+  <Accordion title="What is the smart contract risk?">
+    The SaveToWin program is deployed on Solana mainnet at program ID `save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8`. It is written in Rust using the Anchor framework.
+
+    The program is **upgradeable** by the admin keypair. This means the team can deploy fixes if a vulnerability is discovered, but it also means the admin could in principle alter program behavior. The admin keypair is a dedicated hot wallet with restricted manager rights; the broader upgrade authority model is documented in the repository. A fully non-upgradeable program would eliminate admin upgrade risk but also eliminate the ability to patch bugs.
+  </Accordion>
+
+  <Accordion title="What is the OnRe reinsurance risk?">
+    70% of vault capital is allocated to PT-ONyc, a fixed-yield principal token backed by OnRe reinsurance premiums via Exponent Finance. This provides a **13% fixed APY** sleeve that is uncorrelated to typical DeFi yield fluctuations.
+
+    <Warning>
+      OnRe has an **8-month track record** as of the time of writing. No major catastrophe event has occurred during that window. Real-world reinsurance is designed to absorb catastrophe losses — in a severe year (e.g., comparable to a major hurricane season or earthquake), realized yields on the underlying could be negative. If that happens, the yield sleeve funding prizes would shrink or disappear for an epoch. Your principal would not be directly affected — the vault's design only uses yield, not principal, for prizes — but you might receive no prize yield during a bad draw period.
+    </Warning>
+
+    The 52-day tenor of each PT market reduces exposure to any single catastrophe season, but does not eliminate the risk entirely.
+  </Accordion>
+
+  <Accordion title="What if the PT-ONyc pool is too small for my deposit?">
+    The PT-ONyc market on Exponent Finance currently has approximately **$7M in pool depth**. The vault is designed to scale to mid-hundreds of thousands of USDC in total deposits before pool slippage becomes a concern.
+
+    If total vault deposits (TVL) have not yet crossed the rebalance threshold, the vault holds 100% in the Kamino USDC lending sleeve and activates the PT-ONyc allocation on the next scheduled rebalance once conditions are met. You always earn yield — the blended APY mix adjusts automatically.
+
+    <Tip>
+      If you are depositing a very large amount relative to current TVL, check the app's yield breakdown to confirm the current allocation before depositing.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Can I withdraw at any time?">
+    Yes. The 30% Kamino USDC lending sleeve is **instantly redeemable**, so a meaningful portion of the vault is always liquid. Withdrawals from the Kamino sleeve process in a single transaction with no lock-up period.
+
+    The 70% PT-ONyc sleeve has a fixed maturity date of **2026-05-13**. Withdrawing more than the liquid sleeve covers before maturity would require selling PT tokens on the secondary market, which may carry a small discount depending on market depth. After maturity, PT tokens redeem at par automatically and the vault rolls to the next PT market.
+
+    For most depositors making standard-sized withdrawals, the Kamino sleeve provides sufficient liquidity for immediate exit.
+  </Accordion>
+
+  <Accordion title="What is the Switchboard VRF?">
+    Switchboard VRF (Verifiable Random Function) is an on-chain randomness oracle on Solana. When a draw is requested, the vault asks Switchboard for a cryptographically verifiable random number. The winner is selected using that number weighted by each depositor's TWAB and streak — no admin or external party can influence the outcome.
+
+    This makes every draw **provably fair**: anyone can verify on-chain that the winning selection followed exactly from the published random value and the depositor weights at that epoch.
+  </Accordion>
+
+  <Accordion title="Is $SAVE a token I can trade?">
+    No. $SAVE points exist only as an **off-chain ledger** — a JSON file indexed from on-chain program events. There is no $SAVE token contract, no tradeable asset, and no on-chain mint.
+
+    <Warning>
+      Do not pay anyone claiming to sell or exchange $SAVE points. They do not exist as a transferable asset. Points are tied to your wallet address in the leaderboard and cannot be transferred. If a token is ever launched, it would be announced through official SaveToWin channels only.
+    </Warning>
+
+    Points accumulate based on your USDC-days in the vault multiplied by your streak. Their only current purpose is to track your position on the leaderboard for a potential future airdrop — an outcome that is a stated intention, not a contractual commitment.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,49 @@
+---
+title: "Flexible yield from Kamino USDC lending reserve"
+description: "SaveToWin's Kamino sleeve earns ~4% floating APY and keeps 30% of vault capital instantly withdrawable — the liquidity buffer enabling instant USDC exits."
+---
+
+The smaller of SaveToWin's two yield sleeves keeps 30% of vault capital in the Kamino USDC Main lending reserve. This sleeve earns a floating interest rate — approximately 4% APY based on Kamino's trailing two-year realized average — and, crucially, the funds are available for instant withdrawal at any time. This liquidity buffer is why you can exit SaveToWin without waiting for the reinsurance position to mature.
+
+## What Kamino Finance is
+
+Kamino Finance is Solana's largest lending protocol by total value locked. It operates an over-collateralized lending market: borrowers post collateral and pay interest to borrow assets; lenders (depositors) earn that interest as yield. The USDC Main reserve is Kamino's primary USDC lending market, accepting USDC deposits from lenders and charging borrowers a floating rate that adjusts with utilization. There is no lock-up on the depositor side — you can withdraw at any time as long as the reserve has liquidity available.
+
+## Why 30% stays in this sleeve
+
+The reinsurance sleeve (PT-ONyc) earns a higher rate — 13% fixed — but it is locked until the May 2026 maturity. If the vault held 100% in PT-ONyc, every withdrawal would require either waiting for maturity or selling PT tokens on the secondary market at potentially unfavorable prices.
+
+By keeping 30% of capital in Kamino's instantly redeemable reserve, the vault can satisfy the majority of normal withdrawal requests without touching the higher-yielding, locked sleeve at all.
+
+<Info>
+  When you submit a withdrawal, the vault routes it from the Kamino sleeve first. Only if your withdrawal exceeds the available Kamino balance would the reinsurance sleeve need to be unwound.
+</Info>
+
+## How the floating rate works
+
+Kamino's lending rate is determined algorithmically by the reserve's utilization ratio — how much of the deposited USDC has been borrowed at any given time. Higher utilization means higher rates for lenders; lower utilization means lower rates. The ~4% figure reflects the trailing 365-day average sourced from DeFiLlama and is used as the planning assumption in SaveToWin's yield model. Actual returns will vary.
+
+## Voltr as the intermediary layer
+
+SaveToWin does not deposit directly into Kamino. Instead, it routes USDC through Voltr, a vault infrastructure layer on Solana that manages strategy adaptor registrations, LP token accounting, and the mechanics of depositing into and withdrawing from underlying protocols. The Voltr vault (`AYfsjUSmHEksrqBVAyjmy4t9aDnHjc245jz2hrUWhMrc`) holds the LP position on behalf of the prize vault, and the prize vault interacts with Voltr via CPI (cross-program invocation) for all deposit and withdrawal operations.
+
+From your perspective as a depositor, this is invisible — you deposit USDC and receive tickets. The Voltr layer is an implementation detail that the vault handles automatically.
+
+## Seeding phase
+
+During the seeding phase, before the vault TVL crosses the threshold needed to efficiently enter the PT-ONyc reinsurance market, **100% of deposits sit in this Kamino sleeve**. Your USDC earns the floating Kamino rate from the moment you deposit. Once TVL is sufficient, the strategy bot deploys the 70/30 split and the reinsurance sleeve activates.
+
+<Note>
+  During seeding, the full vault balance is in Kamino — so the entire deposit is instantly redeemable, with no locked capital at all.
+</Note>
+
+## Key addresses
+
+| What | Address |
+|---|---|
+| Kamino USDC Main reserve | `D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59` |
+| Voltr host vault | `AYfsjUSmHEksrqBVAyjmy4t9aDnHjc245jz2hrUWhMrc` |
+
+---
+
+For a full picture of how both sleeves combine to reach the 10.3% blended APY target, see [Yield overview](/yield/overview). For details on the reinsurance sleeve, see [Fixed yield from reinsurance](/yield/reinsurance).

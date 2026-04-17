@@ -1,0 +1,42 @@
+---
+title: "SaveToWin: Principal-Protected Prize Savings on Solana"
+description: "Deposit USDC into the SaveToWin vault, keep your principal safe, and compete for growing jackpot prizes funded by real-world reinsurance yield."
+---
+
+SaveToWin is a no-loss prize savings vault on Solana. You deposit USDC, your principal is protected on-chain at all times, and the yield your deposit earns funds a growing jackpot — drawn every epoch. The longer you stay, the higher your winning odds become.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Connect your wallet and make your first deposit in minutes.
+  </Card>
+  <Card title="How It Works" icon="circle-info" href="/how-it-works">
+    Understand the three flywheels that power SaveToWin.
+  </Card>
+  <Card title="Yield Engine" icon="chart-line" href="/yield/overview">
+    See how your deposit earns 10.3% blended APY from reinsurance and lending.
+  </Card>
+  <Card title="SDK Reference" icon="code" href="/sdk/overview">
+    Build on top of SaveToWin with the TypeScript SDK.
+  </Card>
+</CardGroup>
+
+## How SaveToWin works
+
+<Steps>
+  <Step title="Deposit USDC">
+    Connect a Solana wallet and deposit any amount of USDC. You receive tickets proportional to your deposit — these represent your position and determine your prize odds.
+  </Step>
+  <Step title="Earn yield automatically">
+    Your USDC earns a blended 10.3% APY target from two uncorrelated sources: 70% into fixed-yield real-world reinsurance (PT-ONyc) and 30% into Kamino USDC lending.
+  </Step>
+  <Step title="Build your streak">
+    Stay deposited across consecutive epochs and your winning odds multiply — 1×, 2×, 4×, 8×, 16×, up to 32×. The streak grows automatically as long as you hold a position.
+  </Step>
+  <Step title="Win prizes">
+    Each epoch, a Switchboard VRF draw selects a winner weighted by TWAB-adjusted odds. Prizes roll over if no valid winner is found, growing by 10% each time.
+  </Step>
+</Steps>
+
+<Note>
+  Your principal is always protected. You can withdraw your full deposit at any time — winning is a bonus, not a risk.
+</Note>

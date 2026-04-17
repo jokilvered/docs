@@ -1,0 +1,68 @@
+---
+title: "Deposit USDC into the SaveToWin prize vault"
+description: "Connect your Solana wallet, choose an amount, and confirm one transaction to start earning prize odds — your principal is protected the whole time."
+---
+
+Depositing USDC into SaveToWin takes a single transaction. Once confirmed, the vault mints stwUSDC tickets at a 1-for-1 ratio with your deposit, your streak begins, and your odds are calculated from that moment on. There is no lockup period — you can withdraw at any time without penalty.
+
+## Before you start
+
+You'll need:
+
+- A Solana wallet: **Phantom** or **Solflare**
+- USDC in that wallet (minimum 0.01 USDC)
+- A small amount of SOL to cover the transaction fee (usually less than $0.01)
+
+<Note>
+  The minimum deposit is **0.01 USDC**. There is no maximum and no lockup — your principal is available for withdrawal at any time.
+</Note>
+
+## How to deposit
+
+<Steps>
+  <Step title="Go to the vault">
+    Open the SaveToWin web app and navigate to the **Vault** page (`/vault`). You'll see a welcome panel explaining what you'll find after connecting.
+  </Step>
+  <Step title="Connect your wallet">
+    Click **Connect wallet** on the vault page (or in the site header). Select **Phantom** or **Solflare** from the wallet adapter prompt, then approve the connection request in your wallet extension.
+  </Step>
+  <Step title="Enter your USDC amount">
+    In the **Deposit** form, type the amount of USDC you want to deposit. Your current wallet balance appears in the top-right of the form so you can see what's available.
+  </Step>
+  <Step title="Confirm the transaction">
+    Click **Deposit USDC**. Your wallet will open and ask you to approve the transaction. Review the details, then confirm. The button label updates to **Approve in wallet…** while it waits, then **Confirming…** as the transaction propagates.
+  </Step>
+  <Step title="Check your status">
+    Once the transaction confirms, the **Your status** panel on the right updates automatically. You'll see your vault balance, your streak count, your current multiplier, and your lifetime $SAVE points.
+  </Step>
+</Steps>
+
+## What happens after you deposit
+
+When your deposit lands on-chain:
+
+- **Tickets minted**: The vault mints stwUSDC tokens to your wallet at a 1-for-1 ratio with your USDC. These tickets represent your position and are the basis for prize odds calculations.
+- **Streak starts**: Your streak counter increases by one. If this is your first deposit, your streak is 1 and your multiplier is **1×**.
+- **Odds calculation begins**: Your time-weighted average balance (TWAB) starts accruing. The longer you hold — and the more you deposit — the higher your share of the prize pool each epoch.
+- **Yield routing**: Your USDC flows into the underlying Ranger Earn vault, which routes it to lending strategies (Kamino) to generate the yield that funds prizes.
+
+## How the multiplier grows
+
+Your multiplier doubles with each consecutive epoch you stay deposited, up to a cap of **32×** after five epochs:
+
+| Consecutive epochs deposited | Streak count | Multiplier |
+|:---:|:---:|:---:|
+| 1 (new deposit) | 0 | 1× |
+| 2 | 1 | 2× |
+| 3 | 2 | 4× |
+| 4 | 3 | 8× |
+| 5 | 4 | 16× |
+| 6+ | 5 (max) | 32× |
+
+<Tip>
+  Depositing before the current epoch ends counts as a full epoch for streak purposes. Depositing early in an epoch gives you more time-weighted balance — both help your odds. To maximize your streak, make sure you have a non-zero balance before each epoch closes.
+</Tip>
+
+<Info>
+  Every Solana transaction requires a small SOL fee, typically less than $0.01. Make sure your wallet holds a small SOL balance alongside your USDC — your wallet will warn you if you don't have enough.
+</Info>

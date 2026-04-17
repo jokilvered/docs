@@ -1,0 +1,176 @@
+---
+title: "SaveToWin mainnet program and token addresses"
+description: "All on-chain addresses used by SaveToWin — program IDs, token mints, Voltr vault, Kamino reserve, and PT-ONyc market — exported as typed SDK constants."
+---
+
+All addresses used across the SaveToWin protocol are exported from `@savetowin/sdk` as typed `PublicKey` constants. Every package in the monorepo — the CLI, strategy bot, and Next.js frontend — imports from this single source of truth. Changing a deployed address means changing one file.
+
+Import any constant directly:
+
+<CodeGroup>
+
+```typescript import-example.ts
+import {
+  PRIZE_VAULT_PROGRAM_ID,
+  USDC_MINT,
+  VOLTR_VAULT,
+  VOLTR_LP_MINT,
+  DEFAULT_EPOCH_DURATION_SEC,
+  MAX_STREAK,
+  DEFAULT_ROLLOVER_BPS,
+  DEFAULT_YIELD_SPLIT_BPS,
+} from "@savetowin/sdk";
+```
+
+</CodeGroup>
+
+---
+
+## SaveToWin program
+
+### PRIZE_VAULT_PROGRAM_ID
+
+The PrizeVault Anchor program deployed on mainnet.
+
+```
+save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8
+```
+
+### DEMO_CONFIG_PDA
+
+The live `PrizeVaultConfig` PDA for the SaveToWin mainnet vault, with `rollover_bps = 1000` (10% rollover growth per missed draw).
+
+```
+AqckCR3uZVfbYfALiKNKnTMYzRrMtcNvkBkoBhaPnpP2
+```
+
+---
+
+## Solana core
+
+### USDC_MINT
+
+Mainnet USDC token mint (Circle).
+
+```
+EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+```
+
+### SWITCHBOARD_PROGRAM_ID
+
+Switchboard VRF program used for verifiable randomness in prize draws.
+
+```
+SBondMDrcV3K4kxZR1HNVT7osZxAHVHgYXL5Ze1oMUv
+```
+
+---
+
+## Voltr
+
+### VOLTR_PROGRAM_ID
+
+The Voltr vault program that manages yield strategy execution.
+
+```
+vVoLTRjQmtFpiYoegx285Ze4gsLJ8ZxgFKVcuvmG1a8
+```
+
+### VOLTR_VAULT
+
+The SaveToWin USDC Voltr vault. Deposited USDC flows into this vault to earn yield.
+
+```
+AYfsjUSmHEksrqBVAyjmy4t9aDnHjc245jz2hrUWhMrc
+```
+
+### VOLTR_LP_MINT
+
+The LP token mint for the SaveToWin Voltr vault. The PrizeVault holds LP tokens as a claim on the underlying USDC.
+
+```
+KNxz3PQeNvPB2Xa4TYcwkZ2a7VCJgZLJnd6i9ho2EsE
+```
+
+---
+
+## Kamino
+
+### KAMINO_USDC_RESERVE
+
+The Kamino Klend USDC main market reserve that the Voltr strategy deposits into.
+
+```
+D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59
+```
+
+---
+
+## Exponent / PT-ONyc
+
+Exponent Finance is a fixed-yield PT protocol on Solana. SaveToWin allocates 70% of vault capital to PT-ONyc to lock in a fixed 13% APY from real-world reinsurance premiums.
+
+### EXPONENT_PROGRAM_ID
+
+```
+ExponentnaRg3CQbW6dqQNZKXp7gtZ9DGMp1cwC4HAS7
+```
+
+### PT_ONYC_MARKET
+
+Primary PT-ONyc market, maturity 2026-05-13.
+
+```
+8QJRc12BDXHRLghZXFyPtYtAQeRwnZGKMJQa3G2NVQoC
+```
+
+### PT_ONYC_MINT
+
+The principal token mint for the PT-ONyc market.
+
+```
+ZeqaGvENXeyDtb8mBrC3xi1Zi3zhCfKTV2vr2z5Bwao
+```
+
+### PT_ONYC_SY_MINT
+
+Exponent's wrapped ONyc SY token held by AMM escrows. Distinct from the raw ONyc mint.
+
+```
+G1qbuP11CdquJCzuDjruWqatQAHroajmxhLfeQVgHosF
+```
+
+### ONYC_MINT
+
+OnRe's raw ONyc token, acquired via Jupiter from USDC.
+
+```
+5Y8NV33Vv7WbnLfq3zBcKSdYPrk7g2KoiQoe7M2tcxp5
+```
+
+### PT_ONYC_MATURITY_TS
+
+Unix timestamp (seconds) of the PT-ONyc maturity date.
+
+```typescript
+export const PT_ONYC_MATURITY_TS = 1778669900; // 2026-05-13
+```
+
+---
+
+## Program defaults
+
+These numeric constants are the default values used by the SaveToWin vault configuration.
+
+| Constant | Value | Description |
+|---|---|---|
+| `DEFAULT_EPOCH_DURATION_SEC` | `86400` | Epoch length in seconds (1 day) |
+| `DEFAULT_YIELD_SPLIT_BPS` | `2000` | Percentage of yield sent to the prize pool (20%) |
+| `DEFAULT_ROLLOVER_BPS` | `1000` | Percentage of the prize pool retained on rollover (10%) |
+| `MAX_STREAK` | `5` | Maximum streak count; caps the streak multiplier at 2^5 = 32× |
+| `BPS_DENOMINATOR` | `10000` | Basis point denominator |
+| `MAX_OBSERVATIONS` | `64` | Maximum TWAB observation slots per user account |
+
+<Note>
+  `DEFAULT_YIELD_SPLIT_BPS = 2000` means 20% of harvested yield goes into the prize pool and 80% is retained by the vault's depositors as additional USDC value.
+</Note>

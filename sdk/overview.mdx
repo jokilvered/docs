@@ -1,0 +1,83 @@
+---
+title: "SaveToWin SDK overview: building on the prize vault"
+description: "The @savetowin/sdk package provides typed instruction builders, PDA helpers, account fetchers, and event decoders for the SaveToWin prize vault."
+---
+
+The `@savetowin/sdk` package is the single TypeScript interface to the SaveToWin PrizeVault program on Solana. It wraps Anchor's generated IDL with ergonomic helpers so you can deposit USDC, withdraw principal, derive program addresses, and decode on-chain events without touching raw instruction bytes. The CLI scripts, strategy bot, and Next.js frontend all import exclusively from this package.
+
+## What the SDK provides
+
+| Export | What it does |
+|---|---|
+| `createSdkClient` | Creates an `AnchorProvider` + `Program` instance from a `Connection` and `Wallet` |
+| `buildDepositIxs` | Returns the ATA pre-instructions + deposit instruction for a given user and amount |
+| `buildWithdrawIxs` | Returns the ATA pre-instructions + instant withdraw instruction |
+| `buildRequestWithdrawIxs` | First half of a two-phase withdraw — burns tickets, opens a Voltr receipt |
+| `buildClaimWithdrawIxs` | Second half — finalises the Voltr receipt, transfers USDC to the user |
+| `fetchPrizeVaultConfig` | Fetches and normalises the on-chain `PrizeVaultConfig` account |
+| `fetchUserTwab` | Fetches a user's time-weighted average balance account |
+| `fetchDraw` | Fetches a single `DrawState` account by epoch |
+| `listAllDraws` | Fetches every draw for a config, sorted newest first |
+| `decodeEventFromLog` | Decodes a `StreakUpdated` or `JackpotRollover` event from a raw program log line |
+| `findConfigPda` | Derives the `PrizeVaultConfig` PDA for a given admin |
+| `findTicketMintPda` | Derives the ticket mint PDA |
+| `findUserTwabPda` | Derives the user TWAB PDA |
+| `findDrawPda` | Derives the draw PDA for a given epoch |
+| `findPrizePoolPda` | Derives the prize pool token account PDA |
+| `findPendingWithdrawPda` | Derives the pending withdraw PDA |
+| `findVoltrProtocolPda` | Derives the Voltr protocol PDA |
+| `findVoltrAssetIdleAuth` | Derives the Voltr idle asset authority PDA |
+| `findVoltrLpMintAuth` | Derives the Voltr LP mint authority PDA |
+| `PRIZE_VAULT_PROGRAM_ID`, `USDC_MINT`, `VOLTR_VAULT`, … | All mainnet addresses as typed `PublicKey` constants |
+
+## Minimal example
+
+The snippet below imports the client factory, builds a deposit, and sends the transaction.
+
+<CodeGroup>
+
+```typescript deposit.ts
+import { Connection, Keypair, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { Wallet } from "@coral-xyz/anchor";
+import {
+  createSdkClient,
+  buildDepositIxs,
+  PRIZE_VAULT_PROGRAM_ID,
+} from "@savetowin/sdk";
+
+const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+const keypair  = Keypair.fromSecretKey(/* your key bytes */);
+const wallet   = new Wallet(keypair);
+
+const { program } = createSdkClient(connection, wallet);
+
+const ixs = await buildDepositIxs({
+  program,
+  user:            keypair.publicKey,
+  admin:           new PublicKey("87LkTuUHB4QB8xhwFUnksXXcRZb64dXHD7jvqVLhQi6t"),
+  amountBaseUnits: 10_000_000n, // 10 USDC (6 decimals)
+});
+
+const tx = new Transaction().add(...ixs);
+await sendAndConfirmTransaction(connection, tx, [keypair]);
+```
+
+</CodeGroup>
+
+<Note>
+  The SDK is a workspace package (`"private": true`). If you are building inside the SaveToWin monorepo, reference it as `@savetowin/sdk` in your `package.json` dependencies. See the [installation guide](/sdk/installation) for setup details.
+</Note>
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Installation" icon="download" href="/sdk/installation">
+    Set up the SDK and configure your Anchor provider.
+  </Card>
+  <Card title="Deposit" icon="arrow-down-to-line" href="/sdk/deposit">
+    Build and send deposit instructions.
+  </Card>
+  <Card title="Withdraw" icon="arrow-up-from-line" href="/sdk/withdraw">
+    Withdraw principal instantly or via two-phase flow.
+  </Card>
+</CardGroup>

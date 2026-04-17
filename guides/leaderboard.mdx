@@ -1,0 +1,62 @@
+---
+title: "View and climb the SaveToWin $SAVE points leaderboard"
+description: "See how every depositor ranks by lifetime $SAVE points, find your own position, and learn how streak multipliers accelerate your climb up the board."
+---
+
+The leaderboard (`/leaderboard`) ranks every depositor by their lifetime $SAVE points. Points accumulate automatically while you hold a vault position — the more you deposit, the longer you stay, and the higher your streak multiplier, the faster they grow. The board updates after each epoch's events are indexed on-chain.
+
+## What the leaderboard shows
+
+Each row on the leaderboard displays:
+
+- **Rank**: Your position by lifetime points, with the #1 depositor highlighted
+- **Depositor**: The wallet address (abbreviated), linked on-chain
+- **Streak**: Your current streak epoch count and the multiplier it produces (e.g., `4× · 3`)
+- **Vault**: Your current USDC balance in the vault
+- **Points**: Your total lifetime $SAVE points
+
+The snapshot timestamp and total depositor count appear in the header so you can see exactly how fresh the data is.
+
+## How points are calculated
+
+Your $SAVE points accumulate each epoch based on two factors:
+
+**Time-weighted average balance (TWAB):** The longer your USDC stays in the vault during an epoch, the more it counts. A deposit held for the entire epoch contributes more than one made at the last minute.
+
+**Streak multiplier:** Your streak multiplier is applied on top of your TWAB. If your multiplier is 8×, you accumulate points eight times faster than a depositor at 1× with the same balance.
+
+The combined formula is:
+
+```
+Points per epoch = USDC-days × streak multiplier
+```
+
+For display purposes, points are divided by 1,000, so a result of 5,000 shows as `5.0k`.
+
+<Tip>
+  The fastest way to climb the leaderboard is to build and hold your streak. A depositor with $100 at a 32× multiplier accumulates the same points each epoch as a depositor with $3,200 at 1×. Consistency matters more than deposit size once your streak is high.
+</Tip>
+
+## Finding your own rank
+
+When your wallet is connected, the leaderboard highlights your row automatically. If you're in the top depositors list, a banner or highlighted row shows your rank at a glance. If you're not yet on the board, a call-to-action appears prompting you to make your first deposit.
+
+<Steps>
+  <Step title="Open the leaderboard">
+    Navigate to the **Leaderboard** page (`/leaderboard`) in the SaveToWin app.
+  </Step>
+  <Step title="Connect your wallet">
+    Click **Connect wallet** in the site header. The page highlights your row once your address is recognized.
+  </Step>
+  <Step title="Find your position">
+    Scroll to find your highlighted row, or look for the banner at the top of the list that calls out your rank directly.
+  </Step>
+</Steps>
+
+## When the leaderboard updates
+
+The leaderboard snapshot refreshes approximately once per minute from the indexed on-chain data. After each epoch closes and the draw settles, points are recalculated and the standings update. There may be a short delay between an epoch closing and the leaderboard reflecting new totals.
+
+<Note>
+  The leaderboard reads from a cached snapshot that revalidates every 60 seconds. If you just made a deposit or your streak just incremented, give it a minute or two for the rankings to catch up.
+</Note>

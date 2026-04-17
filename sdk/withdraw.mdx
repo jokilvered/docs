@@ -1,0 +1,214 @@
+---
+title: "buildWithdrawIxs: withdraw USDC from the vault"
+description: "Build instructions to instantly withdraw USDC from the SaveToWin vault, or use the two-phase request/claim flow for non-instant Voltr withdrawals."
+---
+
+The SDK provides two withdrawal paths. The instant path — `buildWithdrawIxs` — burns your ticket tokens and immediately returns USDC from the Voltr vault's idle reserve. The two-phase path — `buildRequestWithdrawIxs` followed by `buildClaimWithdrawIxs` — opens a Voltr withdrawal receipt first, then claims the USDC once the receipt is finalised. Use the instant path in most cases; use the two-phase path when the vault's idle liquidity is insufficient to cover the full withdrawal in a single instruction.
+
+## buildWithdrawIxs
+
+### Function signature
+
+```typescript
+export async function buildWithdrawIxs(p: WithdrawParams): Promise<TransactionInstruction[]>
+```
+
+### WithdrawParams
+
+<ParamField path="body.program" type="Program" required>
+  An Anchor `Program` instance for the PrizeVault IDL. Obtain one via `createSdkClient`.
+</ParamField>
+
+<ParamField path="body.user" type="PublicKey" required>
+  The withdrawing user's public key. Must be the account that holds the ticket tokens.
+</ParamField>
+
+<ParamField path="body.admin" type="PublicKey" required>
+  The vault admin whose `PrizeVaultConfig` to withdraw from. The config PDA is derived as `findConfigPda(admin)`.
+</ParamField>
+
+<ParamField path="body.ticketAmount" type="bigint | number | BN" required>
+  The number of ticket tokens to burn, in base units (6 decimal places). Each ticket redeems for exactly 1 base unit of USDC. Accepts `bigint`, `number`, or `BN`.
+</ParamField>
+
+<ParamField path="body.usdcMint" type="PublicKey">
+  Override the USDC mint. Defaults to mainnet USDC: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`.
+</ParamField>
+
+<ParamField path="body.voltrVault" type="PublicKey">
+  Override the Voltr vault. Defaults to `AYfsjUSmHEksrqBVAyjmy4t9aDnHjc245jz2hrUWhMrc`.
+</ParamField>
+
+<ParamField path="body.voltrLpMint" type="PublicKey">
+  Override the Voltr LP mint. Defaults to `KNxz3PQeNvPB2Xa4TYcwkZ2a7VCJgZLJnd6i9ho2EsE`.
+</ParamField>
+
+### Return value
+
+An array of `TransactionInstruction` objects in execution order:
+
+1. `createAssociatedTokenAccountIdempotent` — ensures the user's USDC ATA exists.
+2. `createAssociatedTokenAccountIdempotent` — ensures the user's ticket ATA exists.
+3. The `withdraw` instruction — burns ticket tokens and CPIs Voltr to transfer USDC back to the user.
+
+### Example
+
+<CodeGroup>
+
+```typescript withdraw-example.ts
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
+import { Wallet } from "@coral-xyz/anchor";
+import { createSdkClient, buildWithdrawIxs } from "@savetowin/sdk";
+
+const connection = new Connection(
+  "https://api.mainnet-beta.solana.com",
+  "confirmed"
+);
+const keypair = Keypair.fromSecretKey(
+  Uint8Array.from(JSON.parse(process.env.WALLET_SECRET_KEY!))
+);
+const wallet = new Wallet(keypair);
+
+const { program } = createSdkClient(connection, wallet);
+
+const ADMIN = new PublicKey("87LkTuUHB4QB8xhwFUnksXXcRZb64dXHD7jvqVLhQi6t");
+const WITHDRAW_AMOUNT = 25n * 1_000_000n; // 25 USDC in base units
+
+const ixs = await buildWithdrawIxs({
+  program,
+  user:         keypair.publicKey,
+  admin:        ADMIN,
+  ticketAmount: WITHDRAW_AMOUNT,
+});
+
+const tx = new Transaction().add(...ixs);
+const sig = await sendAndConfirmTransaction(connection, tx, [keypair]);
+console.log("Withdrawal confirmed:", sig);
+```
+
+</CodeGroup>
+
+<Warning>
+  Withdrawing your entire ticket balance — burning all tickets — resets your streak multiplier to zero. Your streak multiplier increases your odds in future prize draws. If you plan to remain in the vault, consider withdrawing only a portion of your balance.
+</Warning>
+
+---
+
+## Two-phase withdrawal
+
+For large withdrawals where Voltr's idle reserve may not cover the full amount in a single instruction, use the two-phase path.
+
+### Phase 1 — buildRequestWithdrawIxs
+
+Burns your tickets, opens a `PendingWithdraw` PDA, and CPIs Voltr's `request_withdraw_vault` to escrow LP tokens.
+
+```typescript
+export async function buildRequestWithdrawIxs(
+  p: RequestWithdrawParams
+): Promise<TransactionInstruction[]>
+```
+
+`RequestWithdrawParams` has the same fields as `WithdrawParams` (see above). `ticketAmount` controls how many tickets to burn and how much USDC to queue for withdrawal.
+
+### Phase 2 — buildClaimWithdrawIxs
+
+Finalises the Voltr receipt and transfers USDC to the user. Any account can sign this instruction — it is designed to be cranked by a bot or called by the user themselves once the receipt is ready.
+
+```typescript
+export async function buildClaimWithdrawIxs(
+  p: ClaimWithdrawParams
+): Promise<TransactionInstruction[]>
+```
+
+#### ClaimWithdrawParams
+
+<ParamField path="body.program" type="Program" required>
+  Anchor `Program` instance.
+</ParamField>
+
+<ParamField path="body.cranker" type="PublicKey" required>
+  The account that signs and pays for ATA creation on the claim transaction. Can be the user or a dedicated crank bot.
+</ParamField>
+
+<ParamField path="body.user" type="PublicKey" required>
+  The original depositor whose USDC will be released. Must match the address recorded in the `PendingWithdraw` PDA.
+</ParamField>
+
+<ParamField path="body.admin" type="PublicKey" required>
+  The vault admin whose config the withdrawal was opened against.
+</ParamField>
+
+<ParamField path="body.usdcMint" type="PublicKey">
+  Override the USDC mint. Defaults to mainnet USDC.
+</ParamField>
+
+<ParamField path="body.voltrVault" type="PublicKey">
+  Override the Voltr vault. Defaults to the SaveToWin vault.
+</ParamField>
+
+<ParamField path="body.voltrLpMint" type="PublicKey">
+  Override the Voltr LP mint.
+</ParamField>
+
+### Two-phase example
+
+<CodeGroup>
+
+```typescript two-phase-withdraw.ts
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
+import { Wallet } from "@coral-xyz/anchor";
+import {
+  createSdkClient,
+  buildRequestWithdrawIxs,
+  buildClaimWithdrawIxs,
+} from "@savetowin/sdk";
+
+const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+const keypair = Keypair.fromSecretKey(
+  Uint8Array.from(JSON.parse(process.env.WALLET_SECRET_KEY!))
+);
+const wallet = new Wallet(keypair);
+const { program } = createSdkClient(connection, wallet);
+
+const ADMIN = new PublicKey("87LkTuUHB4QB8xhwFUnksXXcRZb64dXHD7jvqVLhQi6t");
+
+// Phase 1: request the withdrawal
+const requestIxs = await buildRequestWithdrawIxs({
+  program,
+  user:         keypair.publicKey,
+  admin:        ADMIN,
+  ticketAmount: 100n * 1_000_000n, // 100 USDC
+});
+const requestTx = new Transaction().add(...requestIxs);
+await sendAndConfirmTransaction(connection, requestTx, [keypair]);
+console.log("Withdraw request submitted. Waiting for Voltr to finalise…");
+
+// Phase 2: claim once the receipt is ready (can be sent by any cranker)
+const claimIxs = await buildClaimWithdrawIxs({
+  program,
+  cranker: keypair.publicKey, // bot or user
+  user:    keypair.publicKey,
+  admin:   ADMIN,
+});
+const claimTx = new Transaction().add(...claimIxs);
+await sendAndConfirmTransaction(connection, claimTx, [keypair]);
+console.log("USDC claimed successfully.");
+```
+
+</CodeGroup>
+
+<Note>
+  There is no fixed delay between request and claim — it depends on when Voltr processes the receipt. Poll the `PendingWithdraw` PDA or listen to Voltr program logs to know when the claim is ready.
+</Note>

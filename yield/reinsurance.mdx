@@ -1,0 +1,69 @@
+---
+title: "Fixed yield from real-world reinsurance backing"
+description: "SaveToWin's 70% reinsurance sleeve buys PT-ONyc on Exponent Finance, locking in 13% fixed APY from OnRe catastrophe reinsurance premiums until May 2026."
+---
+
+The larger of SaveToWin's two yield sleeves earns a fixed 13% APY by holding PT-ONyc, a principal token issued by Exponent Finance on Solana. Unlike floating lending rates that shift with DeFi market conditions, this yield is locked in at the time of purchase and does not change until the position matures. The underlying economic activity that generates this yield has nothing to do with cryptocurrency: it is the premium income from real-world catastrophe reinsurance contracts.
+
+## What reinsurance is
+
+When an insurer — say, a company that sells hurricane coverage across Florida — takes on more risk than it wants to hold on its own balance sheet, it buys reinsurance. A reinsurer agrees to absorb losses above a certain threshold in exchange for a portion of the premium income. In quiet years, the reinsurer collects premiums and pays out little or nothing. In catastrophe years (think Hurricane Katrina), the reinsurer pays large claims.
+
+OnRe is a reinsurance platform that brings this premium income on-chain. Depositors provide capital to back reinsurance contracts; in return they earn a share of the premiums as yield. That yield is what flows through to the PT-ONyc token that SaveToWin holds.
+
+## What PT-ONyc is
+
+Exponent Finance is a fixed-yield protocol on Solana, similar in design to Pendle on EVM chains. It splits yield-bearing tokens into two components:
+
+- **Principal token (PT):** redeemable for the full face value of the underlying at maturity
+- **Yield token (YT):** captures the variable yield stream
+
+SaveToWin holds the PT. Buying PT at a discount to face value and redeeming it at par at maturity is equivalent to earning a fixed APY for the duration of the hold — 13% in this case, as verified on Exponent on 2026-04-13.
+
+## Fixed rate and maturity
+
+The current PT-ONyc position matures on **2026-05-13**. At maturity, the PT redeems at face value and the strategy bot automatically rolls the proceeds into the next available PT-ONyc market on Exponent. You do not need to take any action at rollover — the vault handles it.
+
+<Info>
+  Fixed yield means the 13% APY is known at entry, not estimated. It does not fluctuate with DeFi lending demand or token prices between now and the maturity date.
+</Info>
+
+## Why reinsurance yield is attractive for a prize vault
+
+Reinsurance premiums are driven by factors that have no relationship to crypto market cycles: hurricane seasons, earthquake probabilities, actuarial models, and global insurance capacity. This means:
+
+- When DeFi lending rates compress during bear markets, reinsurance yield is unaffected
+- When crypto volatility spikes, reinsurance yield continues accruing on its own schedule
+- Diversification across two genuinely uncorrelated yield sources reduces the chance that both sleeves underperform at the same time
+
+<Tip>
+  Backtest proxies for this yield type: Pendle PT-sUSDe on EVM realized 10–15% APY when active (2024–25); CAT bonds in TradFi returned 7–10% in quiet years (2015–24 dataset). These are proxies, not guarantees.
+</Tip>
+
+## Honest risks
+
+This sleeve carries risks you should understand before depositing.
+
+<Warning>
+  **PT-ONyc pool depth is approximately $7 million.** This limits how much capital SaveToWin can deploy into this sleeve before experiencing meaningful price impact. The vault is currently designed for small-to-mid AUM; large inflows may reduce the effective fixed rate.
+</Warning>
+
+<Warning>
+  **OnRe has an eight-month track record as of the time of writing, and has not yet been tested through a major catastrophe event.** Reinsurance platforms that face large claims can suffer capital impairment. Historically, CAT bonds saw −8% in 2017 and −20% in the Katrina year. Principal protection in SaveToWin applies to the vault structure — it does not insulate against losses if OnRe's underlying reinsurance contracts pay out large claims.
+</Warning>
+
+<Warning>
+  **PT maturity and rollover:** The PT-ONyc position matures on 2026-05-13. At maturity, the vault rebalancer rolls proceeds into the next available PT-ONyc market on Exponent automatically. If no new market is immediately available, capital moves to the Kamino lending sleeve until redeployment. You do not need to take any action.
+</Warning>
+
+## Key addresses
+
+| What | Address |
+|---|---|
+| Exponent core program | `ExponentnaRg3CQbW6dqQNZKXp7gtZ9DGMp1cwC4HAS7` |
+| PT-ONyc market (2026-05-13) | `8QJRc12BDXHRLghZXFyPtYtAQeRwnZGKMJQa3G2NVQoC` |
+| PT-ONyc maturity | 2026-05-13 (auto-rolls to next PT market) |
+
+---
+
+For more on how the reinsurance sleeve combines with the lending sleeve to reach 10.3% blended APY, see [Yield overview](/yield/overview).

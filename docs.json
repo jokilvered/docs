@@ -1,0 +1,98 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "SaveToWin",
+  "theme": "luma",
+  "logo": {
+    "light": "https://media.brand.dev/3ec5ad42-69d7-4bc0-ad19-7d44a4ad159b.svg",
+    "dark": "https://media.brand.dev/3ec5ad42-69d7-4bc0-ad19-7d44a4ad159b.svg"
+  },
+  "favicon": "https://media.brand.dev/0c8df80a-6bb1-4e6e-8266-890aaa4a2577.jpg",
+  "colors": {
+    "primary": "#0ae8b5",
+    "light": "#d8acee",
+    "dark": "#b745f0"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/jokilvered/savetowin"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "how-it-works"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/vault",
+              "concepts/streak",
+              "concepts/jackpot",
+              "concepts/points"
+            ]
+          },
+          {
+            "group": "Using the Vault",
+            "pages": [
+              "guides/deposit",
+              "guides/withdraw",
+              "guides/leaderboard",
+              "guides/draws"
+            ]
+          },
+          {
+            "group": "Yield Engine",
+            "pages": [
+              "yield/overview",
+              "yield/reinsurance",
+              "yield/lending"
+            ]
+          },
+          {
+            "group": "FAQ",
+            "pages": [
+              "faq/general",
+              "faq/safety"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SDK Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "sdk/overview",
+              "sdk/installation"
+            ]
+          },
+          {
+            "group": "Instructions",
+            "pages": [
+              "sdk/deposit",
+              "sdk/withdraw",
+              "sdk/accounts"
+            ]
+          },
+          {
+            "group": "On-Chain Addresses",
+            "pages": [
+              "sdk/addresses",
+              "sdk/pdas"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

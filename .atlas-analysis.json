@@ -1,0 +1,115 @@
+{
+  "projectType": "saas",
+  "projectName": "SaveToWin",
+  "projectDescription": "A principal-protected prize savings vault on Solana where users deposit USDC, earn yield from real-world reinsurance and on-chain lending, and compete for growing jackpot prizes — without ever risking their principal.",
+  "theme": "luma",
+  "primaryColor": "#0ae8b5",
+  "lightColor": "#d8acee",
+  "darkColor": "#b745f0",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "how-it-works"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/vault",
+              "concepts/streak",
+              "concepts/jackpot",
+              "concepts/points"
+            ]
+          },
+          {
+            "group": "Using the Vault",
+            "pages": [
+              "guides/deposit",
+              "guides/withdraw",
+              "guides/leaderboard",
+              "guides/draws"
+            ]
+          },
+          {
+            "group": "Yield Engine",
+            "pages": [
+              "yield/overview",
+              "yield/reinsurance",
+              "yield/lending"
+            ]
+          },
+          {
+            "group": "FAQ",
+            "pages": [
+              "faq/general",
+              "faq/safety"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SDK Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "sdk/overview",
+              "sdk/installation"
+            ]
+          },
+          {
+            "group": "Instructions",
+            "pages": [
+              "sdk/deposit",
+              "sdk/withdraw",
+              "sdk/accounts"
+            ]
+          },
+          {
+            "group": "On-Chain Addresses",
+            "pages": [
+              "sdk/addresses",
+              "sdk/pdas"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Principal-protected USDC savings — users can never lose their deposited amount",
+    "10.3% blended APY from real-world reinsurance (PT-ONyc) and Kamino USDC lending",
+    "Streak multiplier: consecutive-epoch deposits scale winning odds from 1× up to 32×",
+    "Rolling jackpot: uncollected prizes grow by 10% each epoch, creating compounding FOMO",
+    "$SAVE points: off-chain loyalty ledger tracking USDC-days × streak multiplier toward a future airdrop",
+    "Weekly prize draws using Switchboard VRF for verifiable on-chain randomness",
+    "Instant withdrawals at any time via Voltr/Kamino's liquid lending sleeve",
+    "Live leaderboard ranking depositors by lifetime $SAVE points",
+    "TypeScript SDK (@savetowin/sdk) for developers to build on top of the vault"
+  ],
+  "publicApiSurface": [
+    "buildDepositIxs(params: DepositParams): Promise<TransactionInstruction[]>",
+    "buildWithdrawIxs(params: WithdrawParams): Promise<TransactionInstruction[]>",
+    "buildRequestWithdrawIxs(params): Promise<TransactionInstruction[]>",
+    "buildClaimWithdrawIxs(params): Promise<TransactionInstruction[]>",
+    "fetchPrizeVaultConfig(connection, configPda): Promise<PrizeVaultConfig>",
+    "findConfigPda(admin: PublicKey): [PublicKey, number]",
+    "findUserTwabPda(config, user): [PublicKey, number]",
+    "findDrawPda(config, epoch): [PublicKey, number]",
+    "findTicketMintPda(config): [PublicKey, number]",
+    "decodeEventFromLog(log: string): DecodedEvent | null",
+    "PRIZE_VAULT_PROGRAM_ID",
+    "USDC_MINT",
+    "VOLTR_VAULT",
+    "DEFAULT_EPOCH_DURATION_SEC",
+    "MAX_STREAK",
+    "DEFAULT_ROLLOVER_BPS"
+  ]
+}

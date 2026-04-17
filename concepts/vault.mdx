@@ -1,0 +1,75 @@
+---
+title: "How the SaveToWin vault protects and grows your USDC"
+description: "Learn how the SaveToWin vault protects your USDC principal, generates yield, and converts that yield into prize-pool prizes — all on Solana."
+---
+
+The SaveToWin vault is where your USDC lives. When you deposit, your principal is locked on-chain in a smart contract that you can withdraw from at any time. Your deposit earns real-world yield, and a portion of that yield funds a daily jackpot draw. You keep everything you put in — prizes are always an extra, never a substitute for your principal.
+
+## What happens when you deposit
+
+<Steps>
+  <Step title="Send USDC to the vault">
+    You transfer USDC from your Solana wallet to the PrizeVault program. The program records your deposit and issues you stwUSDC tickets in return.
+  </Step>
+  <Step title="Receive stwUSDC tickets">
+    For every 1 USDC you deposit, you receive 1 stwUSDC ticket. These tickets represent your share of the vault and determine your odds in each daily draw. The more tickets you hold, the greater your weight in the prize draw.
+  </Step>
+  <Step title="Your USDC earns yield">
+    The vault deploys your USDC into two uncorrelated yield sources: 70% into fixed-yield real-world reinsurance (earning ~13% APY) and 30% into Kamino USDC lending (~4% APY). The blended target is 10.3% APY.
+  </Step>
+  <Step title="Yield splits every epoch">
+    At the end of each epoch (once per day), the yield earned is split. 20% flows into the prize pool to fund the jackpot draw. The remaining 80% stays in the vault, compounding your principal balance automatically.
+  </Step>
+</Steps>
+
+<Note>
+  Your principal never leaves your control. You can withdraw your full deposited amount at any time, regardless of whether you have won or lost a draw.
+</Note>
+
+## How the prize pool is funded
+
+The vault collects yield from its two yield sources and applies a 20% split — called the yield split — to the prize pool each epoch. You never pay into the prize pool yourself. The yield does it for you.
+
+| Metric | Value |
+|---|---|
+| Yield split to prizes | 20% of yield each epoch |
+| Yield kept in vault | 80% of yield (compounds your balance) |
+| Blended vault APY target | 10.3% |
+| Epoch duration | 1 day (86,400 seconds) |
+
+## Your tickets and TWAB
+
+Your winning odds are not simply based on how many tickets you hold right now — they are based on your **Time-Weighted Average Balance (TWAB)**. TWAB is your average USDC balance across the entire epoch. This means:
+
+- If you deposit at the start of the epoch and stay the full day, your TWAB equals your full deposit.
+- If you deposit halfway through an epoch, your TWAB is roughly half your deposit for that epoch.
+- The longer and more consistently you stay deposited, the higher your TWAB — and the better your odds.
+
+<Info>
+  TWAB rewards commitment. A depositor who holds 100 USDC for the full epoch will have a higher weighted balance than someone who deposits 200 USDC halfway through. Staying deposited from the start of each epoch gives you the maximum possible odds for that draw.
+</Info>
+
+## Key addresses
+
+You can inspect the vault and verify every on-chain action using these addresses on [Solscan](https://solscan.io).
+
+| What | Address |
+|---|---|
+| PrizeVault program | `save5wixdMqfZSzPrHfuQFSeWpnKTmTXPjLffgkBiw8` |
+| USDC mint (mainnet) | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` |
+| Ticket token symbol | `stwUSDC` |
+
+<AccordionGroup>
+  <Accordion title="What does 'principal-protected' mean in practice?">
+    Principal-protected means the vault program does not allow your deposited USDC to be used for anything other than yield generation. The prize pool is funded entirely by yield — not by redistributing other depositors' principal. If you deposit 500 USDC, you can always withdraw at least 500 USDC (minus any network fees for the transaction itself).
+  </Accordion>
+  <Accordion title="Can I deposit and withdraw at any time?">
+    Yes. There is no lock-up period. You can withdraw your full principal at any time. Keep in mind that withdrawing to zero before a draw will reset your streak multiplier — see the [streak guide](/concepts/streak) for details.
+  </Accordion>
+  <Accordion title="What is stwUSDC?">
+    stwUSDC is your vault ticket token. Each token represents 1 USDC deposited. It is used internally to calculate your prize weight and track your balance. You do not need to manage it manually — the vault handles minting and burning automatically when you deposit or withdraw.
+  </Accordion>
+  <Accordion title="How is the yield actually generated?">
+    70% of vault assets are allocated to PT-ONyc via Exponent Finance — a principal token backed by real-world reinsurance premiums from OnRe, targeting a fixed 13% APY. The remaining 30% goes into Kamino USDC lending, a senior lending market earning a floating ~4% APY that stays liquid for instant withdrawals.
+  </Accordion>
+</AccordionGroup>
